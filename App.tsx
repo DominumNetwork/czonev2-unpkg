@@ -116,9 +116,9 @@ const App: React.FC = () => {
         <main className="flex-1 flex flex-col min-w-0 h-full relative z-10 overflow-auto custom-scrollbar">
           <header className="sticky top-0 z-40 border-b border-[#1c1c1f] p-4 md:p-6 flex justify-between items-center shrink-0 bg-black/60 backdrop-blur-xl">
             <div className="flex items-center gap-4">
+              <DateTimeWidget />
             </div>
             <div className="flex items-center gap-3 relative">
-              <DateTimeWidget />
               <div className="relative">
                 <button 
                   onClick={() => setIsUpdateLogOpen(!isUpdateLogOpen)} 
