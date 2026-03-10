@@ -11,7 +11,7 @@ import { MOVIES_DATA, ANIME_DATA, MANGA_DATA, TV_DATA, STAFF_DATA, PARTNERS_DATA
 import { getWikiIntelligence } from './services/gemini';
 import { Search, X, Film, Sparkles, BookOpen, Tv, SearchX, PlayCircle, Star, Globe, Users, ExternalLink, ShieldAlert, Zap, MessageSquare, Activity, Loader2, Book, AlertTriangle, Settings as SettingsIcon, GitCommit } from 'lucide-react';
 
-const DEFAULT_LOGO = "const DEFAULT_LOGO = "https://raw.githubusercontent.com/ohsols/czonev2/main/logo.svg";";
+const DEFAULT_LOGO = "https://raw.githubusercontent.com/ohsols/czonev2/main/logo.svg";
 
 const DiscordIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
   <svg 
