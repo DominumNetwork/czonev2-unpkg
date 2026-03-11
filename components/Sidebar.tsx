@@ -33,6 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, on
   const navItems = [
     { id: 'support' as Category, label: 'Devs', icon: Heart },
     { id: 'donate' as Category, label: 'Donate', icon: DollarSign },
+    { id: 'browser' as Category, label: 'Browser', icon: Globe },
     { id: 'movies' as Category, label: 'Movies', icon: Film },
     { id: 'tv shows' as Category, label: 'TV Shows', icon: Tv },
     { id: 'anime' as Category, label: 'Anime', icon: Sparkles },

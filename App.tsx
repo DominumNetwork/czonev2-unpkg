@@ -6,8 +6,10 @@ import Settings from './components/Settings';
 import MusicPlayer from './components/MusicPlayer';
 import UpdateLog from './components/UpdateLog';
 import DateTimeWidget from './components/DateTimeWidget';
+import ProxyBrowser from './components/ProxyBrowser';
 import { Category, LibraryItem, StaffMember } from './types';
-import { MOVIES_DATA, ANIME_DATA, MANGA_DATA, TV_DATA, STAFF_DATA, PARTNERS_DATA, PROXIES_DATA } from './constants';
+import { MOVIES_DATA, ANIME_DATA, MANGA_DATA, TV_DATA, STAFF_DATA, PARTNERS_DATA, PROXIES_DATA, GAMES_DATA } from './constants';
+import GamesSection from './components/GamesSection';
 import { getWikiIntelligence } from './services/gemini';
 import { Search, X, Film, Sparkles, BookOpen, Tv, SearchX, PlayCircle, Star, Globe, Users, ExternalLink, ShieldAlert, Zap, MessageSquare, Activity, Loader2, Book, AlertTriangle, Settings as SettingsIcon, GitCommit } from 'lucide-react';
 
@@ -37,6 +39,7 @@ const App: React.FC = () => {
   const [isUpdateLogOpen, setIsUpdateLogOpen] = useState(false);
   const [wikiData, setWikiData] = useState<{text: string, sources: string[]} | null>(null);
   const [isWikiLoading, setIsWikiLoading] = useState(false);
+  const [isBrowserMinimized, setIsBrowserMinimized] = useState(false);
 
   useEffect(() => {
     const savedLogo = localStorage.getItem('chillzone_custom_logo');
@@ -291,85 +294,54 @@ const App: React.FC = () => {
                     {activeCategory === 'tv shows' && <LibrarySection title="TV Series" items={TV_DATA} category="tv" searchQuery="" onOpenDetails={handleOpenDetails} showSearch={true} />}
                     {activeCategory === 'anime' && <LibrarySection title="Anime" items={ANIME_DATA} category="anime" searchQuery="" onOpenDetails={handleOpenDetails} showSearch={true} />}
                     {activeCategory === 'manga' && <LibrarySection title="Manga Archive" items={MANGA_DATA} category="manga" searchQuery="" onOpenDetails={handleOpenDetails} showSearch={true} />}
+                    {activeCategory === 'games' && <GamesSection games={GAMES_DATA} onOpenDetails={(game) => handleOpenDetails({ t: game.title, l: game.link, img: game.image, desc: game.desc }, 'games')} />}
                     {activeCategory === 'music' && <MusicPlayer />}
                     
+                    {activeCategory === 'browser' && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="h-[80vh] py-4 relative"
+                      >
+                        {isBrowserMinimized ? (
+                          <motion.button
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            onClick={() => setIsBrowserMinimized(false)}
+                            className="absolute top-4 left-4 p-4 bg-[#1c1c1f] rounded-full border border-white/10 text-white hover:bg-[#ff2644] transition-all"
+                          >
+                            <Search size={24} />
+                          </motion.button>
+                        ) : (
+                          <ProxyBrowser 
+                            onBackToMovies={() => setActiveCategory('movies')} 
+                            onMinimize={() => setIsBrowserMinimized(true)} 
+                          />
+                        )}
+                      </motion.div>
+                    )}
+
                     {activeCategory === 'proxies' && (
                       <motion.div 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="py-12"
+                        className="py-12 px-6"
                       >
-                        <section className="bg-black rounded-[48px] p-12 border border-[#1c1c1f]">
-                          <div className="text-center mb-12">
-                            <Globe size={48} className="mx-auto text-[#ff2644] mb-6 animate-pulse" />
-                            <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-white mb-4">Proxies</h2>
-                            
-                            <div className="max-w-md mx-auto relative group">
-                              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Search size={18} className="text-[#52525b] group-focus-within:text-[#ff2644] transition-colors" />
-                              </div>
-                              <input 
-                                type="text" 
-                                placeholder="SEARCH PROXIES..." 
-                                value={proxySearch}
-                                onChange={(e) => setProxySearch(e.target.value)}
-                                className="w-full bg-[#18181b] text-white pl-12 pr-4 py-4 rounded-2xl border border-[#27272a] focus:outline-none focus:border-[#ff2644] focus:ring-1 focus:ring-[#ff2644] transition-all font-bold uppercase tracking-wider text-sm placeholder:text-[#52525b]"
-                              />
-                            </div>
-                          </div>
-
-                          <motion.div 
-                            initial="hidden"
-                            animate="show"
-                            variants={{
-                              hidden: { opacity: 0 },
-                              show: {
-                                opacity: 1,
-                                transition: { staggerChildren: 0.02 }
-                              }
-                            }}
-                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                          >
-                            {PROXIES_DATA.filter(p => (p.name || p.url).toLowerCase().includes(proxySearch.toLowerCase())).map((p, idx) => (
-                              <motion.a 
-                                variants={{
-                                  hidden: { opacity: 0, y: 10 },
-                                  show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } }
-                                }}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                key={idx} 
-                                href={p.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="flex flex-col p-6 bg-[#09090b] rounded-2xl border border-[#1c1c1f] hover:border-[#ff2644]/50 hover:bg-[#1c1c1f] transition-all duration-300 group relative overflow-hidden"
-                              >
-                                <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                  <ExternalLink size={16} className="text-[#ff2644]" />
-                                </div>
-                                <div className="flex items-center gap-3 mb-3">
-                                  <div className="w-8 h-8 rounded-full bg-[#ff2644]/10 flex items-center justify-center text-[#ff2644]">
-                                    <Globe size={14} />
-                                  </div>
-                                  <span className="text-[10px] font-black text-[#ff2644] uppercase tracking-wider">NODE {idx + 1}</span>
-                                </div>
-                                <h3 className="text-lg font-bold text-white mb-1 truncate">{p.name || p.url}</h3>
-                                <p className="text-xs text-[#52525b] font-mono truncate">{p.url}</p>
-                              </motion.a>
-                            ))}
-                          </motion.div>
-                          
-                          {PROXIES_DATA.filter(p => (p.name || p.url).toLowerCase().includes(proxySearch.toLowerCase())).length === 0 && (
-                            <motion.div 
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="text-center py-12"
+                        <h1 className="text-5xl font-black italic uppercase tracking-tighter text-white mb-10">Proxy Links</h1>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {PROXIES_DATA.map((proxy, idx) => (
+                            <a 
+                              key={idx} 
+                              href={proxy.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="bg-[#1c1c1f] p-6 rounded-xl border border-white/5 hover:border-[#ff2644]/40 transition-colors flex items-center justify-between group"
                             >
-                              <SearchX size={48} className="mx-auto text-[#27272a] mb-4" />
-                              <p className="text-[#52525b] font-bold uppercase tracking-widest">No proxies found</p>
-                            </motion.div>
-                          )}
-                        </section>
+                              <span className="text-white font-bold">{proxy.name || proxy.url}</span>
+                              <ExternalLink size={16} className="text-[#52525b] group-hover:text-[#ff2644]" />
+                            </a>
+                          ))}
+                        </div>
                       </motion.div>
                     )}
 

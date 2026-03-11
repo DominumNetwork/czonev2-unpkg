@@ -7,6 +7,7 @@ export interface LibraryItem {
   genre?: string[];
   rating?: number;
   links?: { part: string; url: string }[]; // Optional multiple links
+  desc?: string;
 }
 
 export interface Movie {
