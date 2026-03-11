@@ -14,14 +14,14 @@ const containerVariants = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.05
+      staggerChildren: 0.02
     }
   }
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } }
 };
 
 const GamesSection: React.FC<GamesSectionProps> = ({ games, onOpenDetails }) => {
@@ -83,8 +83,8 @@ const GamesSection: React.FC<GamesSectionProps> = ({ games, onOpenDetails }) => 
         </motion.div>
       ) : (
         <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           className="flex flex-col items-center justify-center py-20 text-center opacity-40"
         >
           <SearchX size={64} className="mb-4 text-white" />

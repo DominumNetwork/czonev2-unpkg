@@ -107,8 +107,8 @@ const App: React.FC = () => {
       <div id="app" className="fixed inset-0 flex flex-row overflow-hidden bg-black text-[#fafafa]">
         {/* Background glows */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-          <div className="absolute -top-40 -right-40 w-[700px] h-[700px] rounded-full animate-float opacity-60" style={{ background: 'rgba(255,38,68,0.08)', filter: 'blur(160px)' }}></div>
-          <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] rounded-full opacity-30" style={{ background: 'rgba(37,99,235,0.05)', filter: 'blur(130px)', animation: 'float 25s ease-in-out infinite reverse' }}></div>
+          <div className="absolute -top-40 -right-40 w-[700px] h-[700px] rounded-full opacity-60" style={{ background: 'rgba(255,38,68,0.08)', filter: 'blur(160px)', transform: 'translateZ(0)' }}></div>
+          <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] rounded-full opacity-30" style={{ background: 'rgba(37,99,235,0.05)', filter: 'blur(130px)', transform: 'translateZ(0)' }}></div>
         </div>
         
         <Sidebar activeCategory={activeCategory} onSelect={(cat) => { setActiveCategory(cat); setSearchQuery(''); setIsSettingsOpen(false); }} logoUrl={customLogo} onLogoChange={handleUpdateLogo} />
@@ -268,8 +268,8 @@ const App: React.FC = () => {
                    {searchResults?.manga.length ? <LibrarySection title="Manga" items={searchResults.manga} category="manga" searchQuery={searchQuery} onOpenDetails={handleOpenDetails} /> : null}
                    {totalMatches === 0 && (
                       <motion.div 
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
                         className="flex flex-col items-center justify-center py-40 text-center opacity-40"
                       >
                         <SearchX size={80} className="mb-6 text-[#ff2644]" />
@@ -281,10 +281,10 @@ const App: React.FC = () => {
                 <AnimatePresence mode="wait">
                   <motion.div 
                     key={activeCategory}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.4 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
                     className="w-full pb-24"
                   >
                     {activeCategory === 'movies' && <LibrarySection title="Movies" items={MOVIES_DATA} category="movie" searchQuery="" onOpenDetails={handleOpenDetails} showSearch={true} />}
@@ -325,7 +325,7 @@ const App: React.FC = () => {
                               hidden: { opacity: 0 },
                               show: {
                                 opacity: 1,
-                                transition: { staggerChildren: 0.05 }
+                                transition: { staggerChildren: 0.02 }
                               }
                             }}
                             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
@@ -333,8 +333,8 @@ const App: React.FC = () => {
                             {PROXIES_DATA.filter(p => (p.name || p.url).toLowerCase().includes(proxySearch.toLowerCase())).map((p, idx) => (
                               <motion.a 
                                 variants={{
-                                  hidden: { opacity: 0, y: 20 },
-                                  show: { opacity: 1, y: 0 }
+                                  hidden: { opacity: 0, y: 10 },
+                                  show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } }
                                 }}
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
@@ -393,7 +393,7 @@ const App: React.FC = () => {
                             hidden: { opacity: 0 },
                             show: {
                               opacity: 1,
-                              transition: { staggerChildren: 0.1 }
+                              transition: { staggerChildren: 0.05 }
                             }
                           }}
                           className="grid grid-cols-1 md:grid-cols-2 gap-6"
@@ -401,8 +401,8 @@ const App: React.FC = () => {
                           {PARTNERS_DATA.map((p, idx) => (
                             <motion.a 
                               variants={{
-                                hidden: { opacity: 0, y: 20 },
-                                show: { opacity: 1, y: 0 }
+                                hidden: { opacity: 0, y: 10 },
+                                show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } }
                               }}
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
@@ -440,8 +440,16 @@ const App: React.FC = () => {
                       <motion.div 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="py-12 space-y-24"
+                        className="py-12 space-y-16"
                       >
+                        <div className="text-center">
+                          <h1 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter text-white mb-4">
+                            Developers
+                          </h1>
+                          <p className="text-[#a1a1aa] text-lg font-medium max-w-2xl mx-auto">
+                            The team behind ChillZone. <span className="text-[#ff2644] font-bold">Click on our cards</span> to visit our personal sites and socials!
+                          </p>
+                        </div>
                         <section>
 
                           <motion.div 
@@ -451,7 +459,7 @@ const App: React.FC = () => {
                               hidden: { opacity: 0 },
                               show: {
                                 opacity: 1,
-                                transition: { staggerChildren: 0.1 }
+                                transition: { staggerChildren: 0.05 }
                               }
                             }}
                             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10"
@@ -459,8 +467,8 @@ const App: React.FC = () => {
                             {STAFF_DATA.map((staff, idx) => (
                               <motion.div 
                                 variants={{
-                                  hidden: { opacity: 0, y: 30 },
-                                  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 200, damping: 20 } }
+                                  hidden: { opacity: 0, y: 15 },
+                                  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }
                                 }}
                                 whileHover={{ y: -10 }}
                                 key={idx} 
@@ -476,6 +484,13 @@ const App: React.FC = () => {
                                 </div>
                                 <h3 className="text-2xl font-black mb-3 italic uppercase text-white">{staff.name}</h3>
                                 <p className="text-[#ff2644] font-black text-[9px] uppercase tracking-[0.35em]">{staff.role}</p>
+                                {staff.link && (
+                                  <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <div className="bg-[#ff2644] text-white text-[8px] font-black uppercase tracking-widest py-1.5 px-3 rounded-full flex items-center gap-1.5 shadow-lg">
+                                      <ExternalLink size={10} /> Visit Site
+                                    </div>
+                                  </div>
+                                )}
                               </motion.div>
                             ))}
                           </motion.div>
