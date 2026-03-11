@@ -103,86 +103,30 @@ app.use(session({
   }
 }));
 
-// Web Proxy Route
-app.get('/api/proxy', async (req, res) => {
-  const targetUrl = req.query.url as string;
-  if (!targetUrl) {
-    return res.status(400).send('URL is required');
-  }
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
-  try {
+// Web Proxy Route
+app.use('/api/proxy', createProxyMiddleware({
+  changeOrigin: true,
+  router: (req) => {
+    const targetUrl = req.query.url as string;
+    if (!targetUrl) return 'https://google.com';
     let finalUrl = targetUrl;
     if (!/^https?:\/\//i.test(finalUrl)) {
       finalUrl = 'https://' + finalUrl;
     }
+    return finalUrl;
+  },
+  pathRewrite: {
+    '^/api/proxy': '',
+  },
+  onProxyRes: (proxyRes, req, res) => {
+    // Remove headers that might cause issues
+    delete proxyRes.headers['x-frame-options'];
+    delete proxyRes.headers['content-security-policy'];
+  },
+}));
 
-    const response = await axios.get(finalUrl, {
-      responseType: 'arraybuffer',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-      },
-      validateStatus: () => true,
-      maxRedirects: 5,
-    });
-
-    const contentType = response.headers['content-type'] || '';
-    res.set('Content-Type', contentType);
-
-    const headersToOmit = [
-      'x-frame-options',
-      'content-security-policy',
-      'strict-transport-security',
-      'transfer-encoding',
-      'content-encoding',
-      'access-control-allow-origin'
-    ];
-
-    for (const [key, value] of Object.entries(response.headers)) {
-      if (!headersToOmit.includes(key.toLowerCase())) {
-        res.setHeader(key, value as string);
-      }
-    }
-    res.setHeader('Access-Control-Allow-Origin', '*');
-
-    if (contentType.includes('text/html')) {
-      const html = response.data.toString('utf-8');
-      const $ = cheerio.load(html);
-
-      const rewriteUrl = (url: string) => {
-        if (!url) return url;
-        if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('javascript:') || url.startsWith('#')) {
-          return url;
-        }
-        try {
-          const absoluteUrl = new URL(url, finalUrl).href;
-          return `/api/proxy?url=${encodeURIComponent(absoluteUrl)}`;
-        } catch (e) {
-          return url;
-        }
-      };
-
-      $('[href]').each((_, el) => {
-        $(el).attr('href', rewriteUrl($(el).attr('href')!));
-      });
-      $('[src]').each((_, el) => {
-        $(el).attr('src', rewriteUrl($(el).attr('src')!));
-      });
-      $('[action]').each((_, el) => {
-        $(el).attr('action', rewriteUrl($(el).attr('action')!));
-      });
-
-      $('head').prepend(`<base href="/api/proxy?url=${encodeURIComponent(finalUrl)}/" />`);
-
-      res.send($.html());
-    } else {
-      res.send(response.data);
-    }
-  } catch (error: any) {
-    res.status(500).send(`Proxy Error: ${error.message}`);
-  }
-});
 
 async function startServer() {
   const isProd = process.env.NODE_ENV === 'production';

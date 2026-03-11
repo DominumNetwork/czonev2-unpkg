@@ -53,7 +53,7 @@ const ProxyBrowser: React.FC<ProxyBrowserProps> = ({ onBackToMovies, onMinimize 
     setUrlInput('');
   };
 
-  const proxySrc = currentUrl ? `/api/proxy?url=${encodeURIComponent(currentUrl)}` : '';
+  const proxySrc = currentUrl ? `${window.location.origin}/api/proxy?url=${encodeURIComponent(currentUrl)}` : '';
 
   return (
     <div ref={browserRef} className="flex flex-col h-full w-full bg-[#0a0a0a] rounded-3xl border border-[#1c1c1f] overflow-hidden shadow-2xl">
