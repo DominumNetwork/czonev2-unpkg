@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { LibraryItem } from '../types';
 import { Loader2 } from 'lucide-react';
 import { fetchPoster } from '../services/posters';
+import { motion } from 'framer-motion';
 
 interface ItemCardProps {
   item: LibraryItem;
@@ -53,9 +54,11 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, category, onOpenDetails }) =>
   }, [item.t, isPlaceholder, category]);
 
   return (
-    <div 
+    <motion.div 
+      whileHover={{ scale: 1.05, y: -5 }}
+      whileTap={{ scale: 0.95 }}
       onClick={() => onOpenDetails(item, category)}
-      className="group relative aspect-[2/3] rounded-xl overflow-hidden bg-black transition-all duration-300 hover:scale-[1.05] hover:shadow-2xl cursor-pointer border border-white/5 hover:border-white/50"
+      className="group relative aspect-[2/3] rounded-xl overflow-hidden bg-black transition-all duration-300 hover:shadow-2xl cursor-pointer border border-white/5 hover:border-white/50"
     >
       {/* Loading Skeleton */}
       {!isLoaded && (
@@ -80,7 +83,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, category, onOpenDetails }) =>
           {item.t}
         </h3>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

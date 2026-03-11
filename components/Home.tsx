@@ -8,6 +8,21 @@ interface HomeProps {
   onSearch: (query: string) => void;
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+};
+
 const Home: React.FC<HomeProps> = ({ onNavigate, onSearch }) => {
   const [query, setQuery] = useState('');
 
@@ -53,11 +68,17 @@ const Home: React.FC<HomeProps> = ({ onNavigate, onSearch }) => {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto py-12 px-8 space-y-24">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="max-w-5xl mx-auto py-12 px-8 space-y-24"
+    >
       <div className="text-center space-y-8">
         <motion.h1 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 20, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, type: "spring" }}
           className="text-8xl md:text-9xl font-display uppercase tracking-tighter leading-none"
         >
           KRYPT<span className="text-[#ff2644]">ON</span>
@@ -67,51 +88,61 @@ const Home: React.FC<HomeProps> = ({ onNavigate, onSearch }) => {
           onSubmit={handleSearch}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
           className="max-w-2xl mx-auto pt-8"
         >
-          <div className="relative">
+          <div className="relative group">
             <input 
               type="text" 
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search Anything..."
-              className="w-full bg-zinc-900/50 border border-white/10 rounded-[2rem] py-6 px-8 pl-16 text-white text-lg focus:outline-none focus:ring-2 focus:ring-[#ff2644]/50 transition-all placeholder:text-zinc-600"
+              className="w-full bg-zinc-900/50 border border-white/10 rounded-[2rem] py-6 px-8 pl-16 text-white text-lg focus:outline-none focus:ring-2 focus:ring-[#ff2644]/50 transition-all placeholder:text-zinc-600 group-hover:border-white/20"
             />
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-500 w-6 h-6" />
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-500 w-6 h-6 group-focus-within:text-[#ff2644] transition-colors" />
           </div>
         </motion.form>
 
         <motion.p 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
           className="text-zinc-500 text-sm font-medium tracking-[0.3em] uppercase pt-4"
         >
           Browse without boundaries
         </motion.p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, margin: "-100px" }}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+      >
         {sections.map((s, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.1 }}
-            className="p-10 bg-zinc-900/30 border border-white/5 rounded-[2.5rem] space-y-6 hover:border-[#ff2644]/30 transition-all group"
+            variants={itemVariants}
+            whileHover={{ y: -5, scale: 1.02 }}
+            className="p-10 bg-zinc-900/30 border border-white/5 rounded-[2.5rem] space-y-6 hover:border-[#ff2644]/30 transition-all group cursor-default"
           >
-            <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform">
+            <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center border border-white/5 group-hover:scale-110 group-hover:bg-[#ff2644]/10 transition-all duration-300">
               {s.icon}
             </div>
-            <h3 className="text-2xl font-display uppercase tracking-tight text-white">{s.title}</h3>
+            <h3 className="text-2xl font-display uppercase tracking-tight text-white group-hover:text-[#ff2644] transition-colors">{s.title}</h3>
             <p className="text-zinc-500 font-medium leading-relaxed">{s.desc}</p>
           </motion.div>
         ))}
-      </div>
+      </motion.div>
 
-      <div className="pt-20 text-center space-y-12">
+      <motion.div 
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        className="pt-20 text-center space-y-12"
+      >
         <div className="space-y-4">
           <h2 className="text-4xl font-display uppercase tracking-tight text-white italic">Our <span className="text-[#ff2644]">Partners</span></h2>
           <p className="text-zinc-500 font-medium">Trusted allies in the decentralized web.</p>
@@ -123,22 +154,24 @@ const Home: React.FC<HomeProps> = ({ onNavigate, onSearch }) => {
             { name: "カービィアーケード", url: "https://sites.google.com/view/fus3-bomb/page" },
             { name: "ZGC", url: "https://zgcv2.netlify.app" }
           ].map((p, i) => (
-            <a 
+            <motion.a 
               key={i} 
               href={p.url} 
               target="_blank" 
-              className="px-8 py-4 bg-zinc-900/30 border border-white/5 rounded-2xl text-zinc-400 font-black uppercase tracking-widest text-[10px] hover:border-[#ff2644]/30 hover:text-white transition-all"
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-8 py-4 bg-zinc-900/30 border border-white/5 rounded-2xl text-zinc-400 font-black uppercase tracking-widest text-[10px] hover:border-[#ff2644]/30 hover:text-white transition-colors"
             >
               {p.name}
-            </a>
+            </motion.a>
           ))}
         </div>
 
         <p className="text-zinc-600 text-[10px] font-black uppercase tracking-[0.5em] pt-20">
           Secure Archive Access Protocol v2.4.0
         </p>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, ExternalLink } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const Settings: React.FC = () => {
   const [siteTitle, setSiteTitle] = useState(localStorage.getItem('siteTitle') || 'Google');
@@ -52,10 +53,16 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 w-80">
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95, y: -20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: -20 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      className="p-6 space-y-6 w-80 bg-[#0a0a0a] rounded-xl border border-white/10 shadow-2xl"
+    >
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-black text-white uppercase tracking-tight">Stealth Mode</h1>
-        <Shield size={18} className="text-white" />
+        <Shield size={18} className="text-[#ff2644]" />
       </div>
       
       <div className="space-y-4">
@@ -67,7 +74,7 @@ const Settings: React.FC = () => {
               placeholder="e.g. Google, Drive, Classroom"
               value={siteTitle} 
               onChange={(e) => setSiteTitle(e.target.value)}
-              className="w-full bg-black border border-white/10 rounded-lg py-2 px-3 text-xs outline-none focus:border-white text-white"
+              className="w-full bg-black border border-white/10 rounded-lg py-2 px-3 text-xs outline-none focus:border-white text-white transition-colors"
             />
           </div>
           <div className="space-y-1.5">
@@ -77,24 +84,26 @@ const Settings: React.FC = () => {
               placeholder="Favicon URL"
               value={faviconUrl} 
               onChange={(e) => setFaviconUrl(e.target.value)}
-              className="w-full bg-black border border-white/10 rounded-lg py-2 px-3 text-xs outline-none focus:border-white text-white"
+              className="w-full bg-black border border-white/10 rounded-lg py-2 px-3 text-xs outline-none focus:border-white text-white transition-colors"
             />
           </div>
         </div>
 
-        <button 
+        <motion.button 
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={openAboutBlank}
           className="w-full bg-white text-black py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-white/90 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)]"
         >
           <ExternalLink size={18} />
           Launch About:Blank
-        </button>
+        </motion.button>
         
         <p className="text-[10px] text-center text-[#52525b] leading-relaxed">
-          Opens the site in a new <span className="text-white">about:blank</span> tab to hide it from your browser history and filters.
+          Opens the site in a new <span className="text-[#ff2644]">about:blank</span> tab to hide it from your browser history and filters.
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

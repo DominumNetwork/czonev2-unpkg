@@ -2,6 +2,7 @@ import React from 'react';
 import { LibraryItem } from '../types';
 import ItemCard from './ItemCard';
 import { SearchX } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface LibrarySectionProps {
   title: string;
@@ -12,6 +13,21 @@ interface LibrarySectionProps {
   showSearch?: boolean;
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 300, damping: 24 } }
+};
+
 const LibrarySection: React.FC<LibrarySectionProps> = ({ title, items, category, searchQuery, onOpenDetails, showSearch = false }) => {
   const [localSearch, setLocalSearch] = React.useState('');
   
@@ -21,7 +37,12 @@ const LibrarySection: React.FC<LibrarySectionProps> = ({ title, items, category,
   });
 
   return (
-    <div className="fade-slide-up mb-16">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="mb-16"
+    >
       <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between border-b border-white/10 pb-6 gap-4">
         <div>
           <h2 className="text-3xl font-black uppercase tracking-tighter text-white italic mb-2">
@@ -59,28 +80,36 @@ const LibrarySection: React.FC<LibrarySectionProps> = ({ title, items, category,
       </div>
 
       {filteredItems.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"
+        >
           {filteredItems.map((item, idx) => (
-            <div 
+            <motion.div 
               key={`${item.t}-${idx}`} 
-              className="animate-in fade-in zoom-in duration-300"
-              style={{ animationDelay: `${(idx % 10) * 50}ms` }}
+              variants={itemVariants}
             >
               <ItemCard 
                 item={item} 
                 category={category} 
                 onOpenDetails={onOpenDetails} 
               />
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center justify-center py-20 text-center opacity-40"
+        >
           <SearchX size={64} className="mb-4 text-white" />
           <h3 className="text-xl font-black uppercase tracking-widest italic text-white">No matches</h3>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

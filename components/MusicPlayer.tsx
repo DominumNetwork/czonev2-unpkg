@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Play, Pause, SkipBack, SkipForward, Repeat, Volume2, Music, Loader2, RotateCcw, RotateCw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Track {
   id: number;
@@ -9,6 +10,21 @@ interface Track {
   cover: string;
   streamUrl?: string;
 }
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+};
 
 const MusicPlayer: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -168,23 +184,45 @@ const MusicPlayer: React.FC = () => {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-700">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.5 }}
+      className="p-4 md:p-8 max-w-6xl mx-auto space-y-8"
+    >
       <div className="flex flex-col md:flex-row gap-8 items-start">
         {/* Player Section */}
         <div className="w-full md:w-1/3 space-y-6 sticky top-24">
-          <div className="aspect-square w-full bg-black rounded-3xl overflow-hidden shadow-2xl border border-white/5 group relative">
-            {currentTrack ? (
-              <img 
-                src={currentTrack.cover} 
-                alt={currentTrack.title} 
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-[#1c1c1f]">
-                <Music size={80} />
-              </div>
-            )}
-          </div>
+          <motion.div 
+            whileHover={{ scale: 1.02 }}
+            className="aspect-square w-full bg-black rounded-3xl overflow-hidden shadow-2xl border border-white/5 group relative"
+          >
+            <AnimatePresence mode="wait">
+              {currentTrack ? (
+                <motion.img 
+                  key={currentTrack.id}
+                  initial={{ opacity: 0, scale: 1.1 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.5 }}
+                  src={currentTrack.cover} 
+                  alt={currentTrack.title} 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+              ) : (
+                <motion.div 
+                  key="placeholder"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="w-full h-full flex items-center justify-center text-[#1c1c1f]"
+                >
+                  <Music size={80} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
 
           <div className="space-y-4">
             <div className="text-center md:text-left">
@@ -208,52 +246,74 @@ const MusicPlayer: React.FC = () => {
             </div>
 
             <div className="flex items-center justify-center gap-6">
-              <button 
+              <motion.button 
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
                 onClick={() => setIsRepeat(!isRepeat)}
                 className={`transition-colors ${isRepeat ? 'text-[#ff2644]' : 'text-[#52525b] hover:text-white'}`}
                 title="Repeat"
               >
                 <Repeat size={20} />
-              </button>
+              </motion.button>
               
               <div className="flex items-center gap-4">
-                <button 
+                <motion.button 
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => skipTime(-10)}
                   className="text-[#52525b] hover:text-white transition-colors"
                   title="-10s"
                 >
                   <RotateCcw size={20} />
-                </button>
+                </motion.button>
                 
-                <button 
+                <motion.button 
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={prevTrack}
-                  className="text-white hover:scale-110 transition-transform"
+                  className="text-white transition-transform"
                 >
                   <SkipBack size={28} fill="currentColor" />
-                </button>
+                </motion.button>
 
-                <button 
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={togglePlay}
                   disabled={!currentTrack}
-                  className="w-14 h-14 bg-[#ff2644] text-white rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,38,68,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-14 h-14 bg-[#ff2644] text-white rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(255,38,68,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
-                </button>
+                  <AnimatePresence mode="wait">
+                    {isPlaying ? (
+                      <motion.div key="pause" initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.5 }}>
+                        <Pause size={28} fill="currentColor" />
+                      </motion.div>
+                    ) : (
+                      <motion.div key="play" initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.5 }}>
+                        <Play size={28} fill="currentColor" className="ml-1" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.button>
 
-                <button 
+                <motion.button 
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={nextTrack}
-                  className="text-white hover:scale-110 transition-transform"
+                  className="text-white transition-transform"
                 >
                   <SkipForward size={28} fill="currentColor" />
-                </button>
+                </motion.button>
 
-                <button 
+                <motion.button 
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => skipTime(10)}
                   className="text-[#52525b] hover:text-white transition-colors"
                   title="+10s"
                 >
                   <RotateCw size={20} />
-                </button>
+                </motion.button>
               </div>
             </div>
           </div>
@@ -284,45 +344,62 @@ const MusicPlayer: React.FC = () => {
             </div>
             
             <div className="divide-y divide-[#1c1c1f] max-h-[600px] overflow-y-auto custom-scrollbar">
-              {tracks.length > 0 ? (
-                tracks.map((track, index) => (
-                  <button
-                    key={track.id}
-                    onClick={() => playTrack(index)}
-                    className={`w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors group ${currentTrackIndex === index ? 'bg-white/5' : ''}`}
+              <AnimatePresence mode="wait">
+                {tracks.length > 0 ? (
+                  <motion.div 
+                    key="results"
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="show"
+                    exit="hidden"
                   >
-                    <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 relative">
-                      <img src={track.cover} alt={track.title} className="w-full h-full object-cover" />
-                      {currentTrackIndex === index && isPlaying && (
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                          <div className="flex gap-0.5 items-end h-4">
-                            <div className="w-1 bg-[#ff2644] animate-[music-bar_0.6s_ease-in-out_infinite]" />
-                            <div className="w-1 bg-[#ff2644] animate-[music-bar_0.8s_ease-in-out_infinite_0.1s]" />
-                            <div className="w-1 bg-[#ff2644] animate-[music-bar_0.7s_ease-in-out_infinite_0.2s]" />
-                          </div>
+                    {tracks.map((track, index) => (
+                      <motion.button
+                        key={track.id}
+                        variants={itemVariants}
+                        onClick={() => playTrack(index)}
+                        className={`w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors group ${currentTrackIndex === index ? 'bg-white/5' : ''}`}
+                      >
+                        <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 relative">
+                          <img src={track.cover} alt={track.title} className="w-full h-full object-cover" />
+                          {currentTrackIndex === index && isPlaying && (
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                              <div className="flex gap-0.5 items-end h-4">
+                                <div className="w-1 bg-[#ff2644] animate-[music-bar_0.6s_ease-in-out_infinite]" />
+                                <div className="w-1 bg-[#ff2644] animate-[music-bar_0.8s_ease-in-out_infinite_0.1s]" />
+                                <div className="w-1 bg-[#ff2644] animate-[music-bar_0.7s_ease-in-out_infinite_0.2s]" />
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
+                        <div className="flex-1 text-left min-w-0">
+                          <h4 className={`font-bold truncate ${currentTrackIndex === index ? 'text-[#ff2644]' : 'text-white'}`}>{track.title}</h4>
+                          <p className="text-xs text-[#a1a1aa] truncate">{track.artist} • {track.album}</p>
+                        </div>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Play size={16} className="text-[#ff2644]" fill="currentColor" />
+                        </div>
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    key="empty"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="p-20 text-center space-y-4"
+                  >
+                    <div className="w-20 h-20 bg-[#1c1c1f] rounded-full flex items-center justify-center mx-auto text-[#52525b]">
+                      <Search size={32} />
                     </div>
-                    <div className="flex-1 text-left min-w-0">
-                      <h4 className={`font-bold truncate ${currentTrackIndex === index ? 'text-[#ff2644]' : 'text-white'}`}>{track.title}</h4>
-                      <p className="text-xs text-[#a1a1aa] truncate">{track.artist} • {track.album}</p>
+                    <div className="space-y-1">
+                      <p className="text-white font-bold">Search Music</p>
+                      <p className="text-xs text-[#52525b]">Find your favorite tracks and listen instantly</p>
                     </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Play size={16} className="text-[#ff2644]" fill="currentColor" />
-                    </div>
-                  </button>
-                ))
-              ) : (
-                <div className="p-20 text-center space-y-4">
-                  <div className="w-20 h-20 bg-[#1c1c1f] rounded-full flex items-center justify-center mx-auto text-[#52525b]">
-                    <Search size={32} />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-white font-bold">Search Music</p>
-                    <p className="text-xs text-[#52525b]">Find your favorite tracks and listen instantly</p>
-                  </div>
-                </div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
@@ -341,7 +418,7 @@ const MusicPlayer: React.FC = () => {
           50% { height: 16px; }
         }
       `}</style>
-    </div>
+    </motion.div>
   );
 };
 
