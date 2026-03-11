@@ -1,25 +1,20 @@
-ChillZone
-A personal media library and entertainment hub. Browse movies, TV shows, anime, manga, listen to music, and find proxies — all in one place.
-Features
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-🎬 Movies — Browse and stream films
-📺 TV Shows — Full series library
-✨ Anime — Anime collection
-📖 Manga — Manga archive
-🎵 Music — Built-in music player
-🌐 Proxies — Proxy directory
-🤝 Partners — Partner sites
-🔍 Search — Search across all categories
-🧠 Wiki Intelligence — AI-powered info fetching powered by Gemini
+# Run and deploy your AI Studio app
 
-Built With
+This contains everything you need to run your app locally.
 
-React + TypeScript
-Vite
-Tailwind CSS v4
-Framer Motion
+View your app in AI Studio: https://ai.studio/apps/591c7ca9-72d5-4080-a4dc-275555012050
 
-Live Site
-ohsols.github.io/czonev2
-Credits
-Shoutout to Chillkirb Central for helping with images.
+## Run Locally
+
+**Prerequisites:**  Node.js
+
+
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`

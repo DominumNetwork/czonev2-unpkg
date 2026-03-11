@@ -1,6 +1,6 @@
 export interface LibraryItem {
   t: string; // Title
-  l: string; // Link
+  l?: string; // Link
   img?: string; // Optional hardcoded poster
   banner?: string; // Optional hardcoded banner
   year?: number;
@@ -41,6 +41,13 @@ export interface ProxyItem {
 export type Category = 'home' | 'movies' | 'tv shows' | 'anime' | 'manga' | 'proxies' | 'partners' | 'dev' | 'support' | 'donate' | 'games' | 'apps' | 'browser' | 'settings' | 'music';
 
 export interface Anime {
+  title: string;
+  imageUrl: string;
+  link?: string;
+  links?: { part: string; url: string }[];
+}
+
+export interface TVShow {
   title: string;
   imageUrl: string;
   link?: string;

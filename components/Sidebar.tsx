@@ -52,6 +52,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, on
               className="w-full h-full object-contain"
             />
           </div>
+          <div className="mt-4 text-center hidden md:block">
+            <h2 className="text-sm font-black italic uppercase tracking-tighter text-white">ChillZone <span className="text-[#ff2644]">v2</span></h2>
+          </div>
           <input 
             type="file" 
             ref={fileInputRef} 
