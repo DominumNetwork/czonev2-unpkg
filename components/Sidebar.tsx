@@ -31,15 +31,6 @@ const Sidebar: React.FC<SidebarProps> = ({ logoUrl, onLogoChange }) => {
   };
 
   const navItems = [
-    { id: 'support', label: 'Devs', icon: Heart, path: '/devs' },
-    { id: 'donate', label: 'Donate', icon: DollarSign, path: '/donate' },
-    { id: 'movies', label: 'Movies', icon: Film, path: '/movies' },
-    { id: 'tv shows', label: 'TV Shows', icon: Tv, path: '/tv' },
-    { id: 'anime', label: 'Anime', icon: Sparkles, path: '/anime' },
-    { id: 'manga', label: 'Manga', icon: BookOpen, path: '/manga' },
-    { id: 'music', label: 'Music', icon: Music, path: '/music' },
-    { id: 'proxies', label: 'Proxies', icon: Shield, path: '/proxies' },
-    { id: 'partners', label: 'Partners', icon: Users, path: '/partners' },
   ];
 
   return (
