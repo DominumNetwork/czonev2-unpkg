@@ -103,29 +103,8 @@ app.use(session({
   }
 }));
 
-import { createProxyMiddleware } from 'http-proxy-middleware';
 
-// Web Proxy Route
-app.use('/api/proxy', createProxyMiddleware({
-  changeOrigin: true,
-  router: (req) => {
-    const targetUrl = req.query.url as string;
-    if (!targetUrl) return 'https://google.com';
-    let finalUrl = targetUrl;
-    if (!/^https?:\/\//i.test(finalUrl)) {
-      finalUrl = 'https://' + finalUrl;
-    }
-    return finalUrl;
-  },
-  pathRewrite: {
-    '^/api/proxy': '',
-  },
-  onProxyRes: (proxyRes, req, res) => {
-    // Remove headers that might cause issues
-    delete proxyRes.headers['x-frame-options'];
-    delete proxyRes.headers['content-security-policy'];
-  },
-}));
+// Web Proxy Route removed
 
 
 async function startServer() {

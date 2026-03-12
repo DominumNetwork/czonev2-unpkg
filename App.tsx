@@ -6,7 +6,6 @@ import Settings from './components/Settings';
 import MusicPlayer from './components/MusicPlayer';
 import UpdateLog from './components/UpdateLog';
 import DateTimeWidget from './components/DateTimeWidget';
-import ProxyBrowser from './components/ProxyBrowser';
 import { Category, LibraryItem, StaffMember } from './types';
 import { MOVIES_DATA, ANIME_DATA, MANGA_DATA, TV_DATA, STAFF_DATA, PARTNERS_DATA, PROXIES_DATA, GAMES_DATA } from './constants';
 import GamesSection from './components/GamesSection';
@@ -39,7 +38,6 @@ const App: React.FC = () => {
   const [isUpdateLogOpen, setIsUpdateLogOpen] = useState(false);
   const [wikiData, setWikiData] = useState<{text: string, sources: string[]} | null>(null);
   const [isWikiLoading, setIsWikiLoading] = useState(false);
-  const [isBrowserMinimized, setIsBrowserMinimized] = useState(false);
 
   useEffect(() => {
     const savedLogo = localStorage.getItem('chillzone_custom_logo');
@@ -297,30 +295,6 @@ const App: React.FC = () => {
                     {activeCategory === 'games' && <GamesSection games={GAMES_DATA} onOpenDetails={(game) => handleOpenDetails({ t: game.title, l: game.link, img: game.image, desc: game.desc }, 'games')} />}
                     {activeCategory === 'music' && <MusicPlayer />}
                     
-                    {activeCategory === 'browser' && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="h-[80vh] py-4 relative"
-                      >
-                        {isBrowserMinimized ? (
-                          <motion.button
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            onClick={() => setIsBrowserMinimized(false)}
-                            className="absolute top-4 left-4 p-4 bg-[#1c1c1f] rounded-full border border-white/10 text-white hover:bg-[#ff2644] transition-all"
-                          >
-                            <Search size={24} />
-                          </motion.button>
-                        ) : (
-                          <ProxyBrowser 
-                            onBackToMovies={() => setActiveCategory('movies')} 
-                            onMinimize={() => setIsBrowserMinimized(true)} 
-                          />
-                        )}
-                      </motion.div>
-                    )}
-
                     {activeCategory === 'proxies' && (
                       <motion.div 
                         initial={{ opacity: 0, y: 20 }}
