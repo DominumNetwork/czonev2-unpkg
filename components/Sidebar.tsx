@@ -3,16 +3,16 @@ import React, { useRef } from 'react';
 import { Home, Film, Tv, Sparkles, BookOpen, Heart, Camera, Globe, Users, DollarSign, Gamepad2, LayoutGrid, Settings as SettingsIcon, Shield, Code, Music } from 'lucide-react';
 import { Category } from '../types';
 import { motion } from 'framer-motion';
+import { Link, useLocation } from 'react-router-dom';
 
 interface SidebarProps {
-  activeCategory: Category;
-  onSelect: (category: Category) => void;
-  logoUrl: string;
   onLogoChange: (newLogo: string) => void;
+  logoUrl: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, onLogoChange }) => {
+const Sidebar: React.FC<SidebarProps> = ({ logoUrl, onLogoChange }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const location = useLocation();
 
   const handleLogoClick = () => {
     fileInputRef.current?.click();
@@ -31,15 +31,15 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, on
   };
 
   const navItems = [
-    { id: 'support' as Category, label: 'Devs', icon: Heart },
-    { id: 'donate' as Category, label: 'Donate', icon: DollarSign },
-    { id: 'movies' as Category, label: 'Movies', icon: Film },
-    { id: 'tv shows' as Category, label: 'TV Shows', icon: Tv },
-    { id: 'anime' as Category, label: 'Anime', icon: Sparkles },
-    { id: 'manga' as Category, label: 'Manga', icon: BookOpen },
-    { id: 'music' as Category, label: 'Music', icon: Music },
-    { id: 'proxies' as Category, label: 'Proxies', icon: Shield },
-    { id: 'partners' as Category, label: 'Partners', icon: Users },
+    { id: 'support', label: 'Devs', icon: Heart, path: '/devs' },
+    { id: 'donate', label: 'Donate', icon: DollarSign, path: '/donate' },
+    { id: 'movies', label: 'Movies', icon: Film, path: '/movies' },
+    { id: 'tv shows', label: 'TV Shows', icon: Tv, path: '/tv' },
+    { id: 'anime', label: 'Anime', icon: Sparkles, path: '/anime' },
+    { id: 'manga', label: 'Manga', icon: BookOpen, path: '/manga' },
+    { id: 'music', label: 'Music', icon: Music, path: '/music' },
+    { id: 'proxies', label: 'Proxies', icon: Shield, path: '/proxies' },
+    { id: 'partners', label: 'Partners', icon: Users, path: '/partners' },
   ];
 
   return (
@@ -74,22 +74,22 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, on
       <nav className="flex-1 space-y-2 overflow-y-auto custom-scrollbar pr-2">
         {navItems.map((item, idx) => {
           const Icon = item.icon;
-          const isActive = activeCategory === item.id;
+          const isActive = location.pathname === item.path;
           return (
-            <motion.button
+            <motion.div
               key={item.id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.05 }}
               whileHover={{ scale: 1.02, x: 4 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onSelect(item.id)}
               className={`relative w-full flex items-center justify-center md:justify-start gap-4 p-4 rounded-xl transition-colors duration-300 font-bold uppercase tracking-widest text-xs ${
                 isActive 
                   ? 'bg-[#ff2644] text-white' 
                   : 'text-[#52525b] hover:bg-[#1c1c1f] hover:text-white'
               }`}
             >
+              <Link to={item.path} className="absolute inset-0 z-10" />
               <Icon size={20} className="relative z-10" />
               <span className="hidden md:block relative z-10">{item.label}</span>
               {isActive && (
@@ -100,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, on
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
               )}
-            </motion.button>
+            </motion.div>
           );
         })}
       </nav>
