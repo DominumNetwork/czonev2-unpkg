@@ -52,11 +52,11 @@ const CustomCursor: React.FC = () => {
       transition={{ type: 'tween', ease: 'linear', duration: 0 }}
     >
       <img 
-        src="https://cdn.discordapp.com/attachments/1233881524550635650/1470991893235105938/9163C954-B6AB-45AE-AB4A-B2BEDE4D70D7.gif?ex=69b38af5&is=69b23975&hm=e6ca5005ab84aad9ec4250baa16c41512b7fca85c6e87c82b468bcd004ca35dc" 
+        src="https://cdn.discordapp.com/attachments/1233881524550635650/1450376451974238258/IMG_6523.gif?ex=69b45994&is=69b30814&hm=43ae985b5ae60712b62e8d0c9cc4d1a28e482078ff15dbb80650818424392276" 
         alt="cursor" 
-        className="w-8 h-8 object-contain drop-shadow-md" 
+        className="w-10 h-10 object-contain drop-shadow-md" 
         referrerPolicy="no-referrer"
-        style={{ transform: 'translate(-20%, -20%)' }}
+        style={{ transform: 'translate(-50%, -50%)' }}
       />
     </motion.div>
   );
