@@ -37,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, on
     { id: 'support' as Category, label: 'Devs', icon: Heart },
     { id: 'donate' as Category, label: 'Donate', icon: DollarSign },
     { id: 'movies' as Category, label: 'Movies', icon: Film },
-    { id: 'tv shows' as Category, label: 'TV Shows', icon: Tv },
+    { id: 'tv shows' as Category, label: 'TV', icon: Tv },
     { id: 'anime' as Category, label: 'Animes', icon: Sparkles },
     { id: 'manga' as Category, label: 'Mangas', icon: BookOpen },
     { id: 'music' as Category, label: 'Music', icon: Music },
