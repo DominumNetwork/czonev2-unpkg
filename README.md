@@ -1,20 +1,48 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+  <img src="https://raw.githubusercontent.com/ohsols/czonev2/main/logo.svg" width="120" height="120" alt="ChillZone Logo" />
+  
+  # CHILLZONE
+  
+  **Your all-in-one entertainment hub.**
+  
+  [![Live Site](https://img.shields.io/badge/Live%20Site-chillz0ne.dev-ff2644?style=for-the-badge)](https://chillz0ne.dev)
+  [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=for-the-badge&logo=discord)](http://discord.gg/cuHARsXESW)
 </div>
 
-# Run and deploy your AI Studio app
+---
 
-This contains everything you need to run your app locally.
+## What is ChillZone?
 
-View your app in AI Studio: https://ai.studio/apps/591c7ca9-72d5-4080-a4dc-275555012050
+ChillZone is a personal media library and entertainment hub. Browse movies, TV shows, anime, manga, listen to music, find proxies, and soon games all in one sleek dark interface.
 
-## Run Locally
+## Features
 
-**Prerequisites:**  Node.js
+- 🎬 **Movies** — Browse and stream films from the archive
+- 📺 **TV Shows** — Full series library
+- ✨ **Anime** — Curated anime collection
+- 📖 **Manga** — Complete manga archive
+- 🎮 **Games** — Embedded browser games
+- 🎵 **Music** — Built-in music player
+- 🌐 **Proxies** — Proxy directory
+- 🤝 **Partners** — Partner sites
+- 🔍 **Search** — Search across all categories instantly
+
+## Built With
+
+| Technology | Purpose |
+|---|---|
+| React + TypeScript | Frontend framework |
+| Vite | Build tool |
+| Tailwind CSS v4 | Styling |
+| Framer Motion | Animations |
+
+## Deployment
+
+The site is automatically built and deployed via GitHub Actions to Cloudflare Pages on every push to `main`.
 
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+---
+
+<div align="center">
+  <sub>Made with ❤️ by ohsols</sub>
+</div>
