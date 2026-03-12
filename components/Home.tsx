@@ -38,32 +38,32 @@ const Home: React.FC<HomeProps> = ({ onNavigate, onSearch }) => {
     {
       title: "Welcome to Krypton!",
       desc: "Browse the web freely. Let's show you around.",
-      icon: <Globe className="text-[#ff2644]" size={32} />,
+      icon: <Globe className="text-accent" size={32} />,
     },
     {
       title: "Search Anything",
       desc: "Type a URL or search query into the address bar at the top.",
-      icon: <Search className="text-[#ff2644]" size={32} />,
+      icon: <Search className="text-accent" size={32} />,
     },
     {
       title: "Tabs",
       desc: "Open tabs using the + button at the top.",
-      icon: <LayoutGrid className="text-[#ff2644]" size={32} />,
+      icon: <LayoutGrid className="text-accent" size={32} />,
     },
     {
       title: "Bookmarks",
       desc: "Click the star icon at the top to bookmark a page.",
-      icon: <Shield className="text-[#ff2644]" size={32} />,
+      icon: <Shield className="text-accent" size={32} />,
     },
     {
       title: "Offline Mode",
       desc: "Use the site online and play games at least once when online to use the site offline.",
-      icon: <Gamepad2 className="text-[#ff2644]" size={32} />,
+      icon: <Gamepad2 className="text-accent" size={32} />,
     },
     {
       title: "Tab Cloaking",
       desc: "In the settings, click 'Cloak' to disguise the tab into an about:blank page!",
-      icon: <Shield className="text-[#ff2644]" size={32} />,
+      icon: <Shield className="text-accent" size={32} />,
     }
   ];
 
@@ -81,7 +81,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, onSearch }) => {
           transition={{ duration: 0.5, type: "spring" }}
           className="text-8xl md:text-9xl font-display uppercase tracking-tighter leading-none"
         >
-          KRYPT<span className="text-[#ff2644]">ON</span>
+          KRYPT<span className="text-accent">ON</span>
         </motion.h1>
         
         <motion.form 
@@ -97,9 +97,9 @@ const Home: React.FC<HomeProps> = ({ onNavigate, onSearch }) => {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search Anything..."
-              className="w-full bg-zinc-900/50 border border-white/10 rounded-[2rem] py-6 px-8 pl-16 text-white text-lg focus:outline-none focus:ring-2 focus:ring-[#ff2644]/50 transition-all placeholder:text-zinc-600 group-hover:border-white/20"
+              className="w-full bg-surface-hover/50 border border-white/10 rounded-[2rem] py-6 px-8 pl-16 text-white text-lg focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all placeholder:text-text-muted group-hover:border-white/20"
             />
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-500 w-6 h-6 group-focus-within:text-[#ff2644] transition-colors" />
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-text-secondary w-6 h-6 group-focus-within:text-accent transition-colors" />
           </div>
         </motion.form>
 
@@ -107,7 +107,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, onSearch }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.5 }}
-          className="text-zinc-500 text-sm font-medium tracking-[0.3em] uppercase pt-4"
+          className="text-text-secondary text-sm font-medium tracking-[0.3em] uppercase pt-4"
         >
           Browse without boundaries
         </motion.p>
@@ -125,13 +125,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate, onSearch }) => {
             key={i}
             variants={itemVariants}
             whileHover={{ y: -5, scale: 1.02 }}
-            className="p-10 bg-zinc-900/30 border border-white/5 rounded-[2.5rem] space-y-6 hover:border-[#ff2644]/30 transition-all group cursor-default"
+            className="p-10 bg-surface-hover/30 border border-white/5 rounded-[2.5rem] space-y-6 hover:border-accent/30 transition-all group cursor-default"
           >
-            <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center border border-white/5 group-hover:scale-110 group-hover:bg-[#ff2644]/10 transition-all duration-300">
+            <div className="w-16 h-16 bg-bg rounded-2xl flex items-center justify-center border border-white/5 group-hover:scale-110 group-hover:bg-accent/10 transition-all duration-300">
               {s.icon}
             </div>
-            <h3 className="text-2xl font-display uppercase tracking-tight text-white group-hover:text-[#ff2644] transition-colors">{s.title}</h3>
-            <p className="text-zinc-500 font-medium leading-relaxed">{s.desc}</p>
+            <h3 className="text-2xl font-display uppercase tracking-tight text-white group-hover:text-accent transition-colors">{s.title}</h3>
+            <p className="text-text-secondary font-medium leading-relaxed">{s.desc}</p>
           </motion.div>
         ))}
       </motion.div>
@@ -144,8 +144,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate, onSearch }) => {
         className="pt-20 text-center space-y-12"
       >
         <div className="space-y-4">
-          <h2 className="text-4xl font-display uppercase tracking-tight text-white italic">Our <span className="text-[#ff2644]">Partners</span></h2>
-          <p className="text-zinc-500 font-medium">Trusted allies in the decentralized web.</p>
+          <h2 className="text-4xl font-display uppercase tracking-tight text-white italic">Our <span className="text-accent">Partners</span></h2>
+          <p className="text-text-secondary font-medium">Trusted allies in the decentralized web.</p>
         </div>
         
         <div className="flex flex-wrap justify-center gap-8">
@@ -160,14 +160,14 @@ const Home: React.FC<HomeProps> = ({ onNavigate, onSearch }) => {
               target="_blank" 
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 bg-zinc-900/30 border border-white/5 rounded-2xl text-zinc-400 font-black uppercase tracking-widest text-[10px] hover:border-[#ff2644]/30 hover:text-white transition-colors"
+              className="px-8 py-4 bg-surface-hover/30 border border-white/5 rounded-2xl text-text-muted font-black uppercase tracking-widest text-[10px] hover:border-accent/30 hover:text-white transition-colors"
             >
               {p.name}
             </motion.a>
           ))}
         </div>
 
-        <p className="text-zinc-600 text-[10px] font-black uppercase tracking-[0.5em] pt-20">
+        <p className="text-text-muted text-[10px] font-black uppercase tracking-[0.5em] pt-20">
           Secure Archive Access Protocol v2.4.0
         </p>
       </motion.div>

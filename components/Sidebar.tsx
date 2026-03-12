@@ -1,8 +1,9 @@
 
-import React, { useRef } from 'react';
-import { Home, Film, Tv, Sparkles, BookOpen, Heart, Camera, Globe, Users, DollarSign, Gamepad2, LayoutGrid, Settings as SettingsIcon, Shield, Code, Music } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Home, Film, Tv, Sparkles, BookOpen, Heart, Camera, Globe, Users, DollarSign, Gamepad2, LayoutGrid, Settings as SettingsIcon, Shield, Code, Music, Database } from 'lucide-react';
 import { Category } from '../types';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useLanguage } from '../context/LanguageContext';
 
 interface SidebarProps {
   activeCategory: Category;
@@ -13,6 +14,8 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, onLogoChange }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useLanguage();
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleLogoClick = () => {
     fileInputRef.current?.click();
@@ -42,23 +45,26 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, on
   ];
 
   return (
-    <aside className="w-64 bg-black border-r border-white/10 flex flex-col p-6 shrink-0 transition-all duration-500 z-50 h-full pointer-events-auto">
-      <div className="mb-10 flex flex-col items-center justify-center">
+    <motion.aside 
+      initial={false}
+      animate={{ width: isHovered ? 160 : 80 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="bg-bg border-r border-white/5 flex flex-col items-center py-8 shrink-0 transition-all duration-300 z-[100] h-full relative"
+    >
+      <div className="mb-12">
         <motion.div 
-          whileHover={{ scale: 1.05, rotate: 5 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           className="relative group/logo cursor-pointer" 
           onClick={handleLogoClick}
         >
-          <div className="w-16 h-16 shrink-0 overflow-hidden relative z-10 shadow-[0_0_30px_rgba(255,255,255,0.1)] rounded-2xl">
+          <div className="w-12 h-12 shrink-0 overflow-hidden relative z-10 shadow-[0_0_20px_rgba(255,255,255,0.05)] rounded-xl">
             <img 
               src={logoUrl} 
               alt="Logo" 
               className="w-full h-full object-contain"
             />
-          </div>
-          <div className="mt-4 text-center">
-            <h2 className="text-sm font-black italic uppercase tracking-tighter text-white">Czone</h2>
           </div>
           <input 
             type="file" 
@@ -70,32 +76,43 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, on
         </motion.div>
       </div>
       
-      <nav className="flex-1 space-y-2 overflow-y-auto custom-scrollbar pr-2 pointer-events-auto">
-        {navItems.map((item, idx) => {
-          const Icon = item.icon;
-          const isActive = activeCategory === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => onSelect(item.id)}
-              className={`relative z-50 w-full flex items-center justify-center md:justify-start gap-4 p-4 rounded-xl transition-colors duration-300 font-bold uppercase tracking-widest text-xs ${
-                isActive 
-                  ? 'bg-[#ff2644] text-white' 
-                  : 'text-[#52525b] hover:bg-[#1c1c1f] hover:text-white'
-              }`}
-            >
-              <Icon size={20} className="relative z-10" />
-              <span className="relative z-10">{item.label}</span>
-              {isActive && (
-                <div
-                  className="absolute inset-0 bg-[#ff2644] rounded-xl z-0"
-                />
-              )}
-            </button>
-          );
-        })}
-      </nav>
-    </aside>
+      <div className="flex-1 w-full flex flex-col items-center gap-8 overflow-y-auto custom-scrollbar no-scrollbar">
+        {/* Data/Navigation Section */}
+        <div className="flex flex-col items-center gap-6 w-full">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeCategory === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onSelect(item.id)}
+                className={`flex flex-col items-center gap-1.5 transition-all duration-300 group ${
+                  isActive ? 'text-accent' : 'text-text-secondary hover:text-white'
+                }`}
+              >
+                <div className={`p-2.5 rounded-xl transition-all duration-300 ${
+                  isActive ? 'bg-accent/10 shadow-[0_0_15px_rgba(255,0,0,0.2)]' : 'group-hover:bg-white/5'
+                }`}>
+                  <Icon size={22} />
+                </div>
+                <AnimatePresence>
+                  {isHovered && (
+                    <motion.span 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="text-[10px] font-black uppercase tracking-[0.2em] italic"
+                    >
+                      {t(item.label)}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </motion.aside>
   );
 };
 

@@ -43,7 +43,7 @@ const GamesSection: React.FC<GamesSectionProps> = ({ games, onOpenDetails }) => 
           <h2 className="text-3xl font-black uppercase tracking-tighter text-white italic mb-2">
             Games
           </h2>
-          <p className="text-[#52525b] text-xs font-bold uppercase tracking-widest">
+          <p className="text-text-secondary text-xs font-bold uppercase tracking-widest">
             {filteredGames.length} Titles Available
           </p>
         </div>
@@ -54,9 +54,9 @@ const GamesSection: React.FC<GamesSectionProps> = ({ games, onOpenDetails }) => 
             placeholder="Search games..."
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
-            className="w-full bg-black border border-white/10 rounded-xl py-2.5 pl-10 pr-4 outline-none focus:border-white transition-all duration-300 text-sm placeholder:text-[#3f3f46]"
+            className="w-full bg-bg border border-white/10 rounded-xl py-2.5 pl-10 pr-4 outline-none focus:border-white transition-all duration-300 text-sm placeholder:text-text-muted"
           />
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#3f3f46] group-focus-within:text-white transition-colors">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-white transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           </div>
         </div>

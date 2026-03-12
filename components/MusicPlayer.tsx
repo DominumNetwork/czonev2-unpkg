@@ -196,7 +196,7 @@ const MusicPlayer: React.FC = () => {
         <div className="w-full md:w-1/3 space-y-6 sticky top-24">
           <motion.div 
             whileHover={{ scale: 1.02 }}
-            className="aspect-square w-full bg-black rounded-3xl overflow-hidden shadow-2xl border border-white/5 group relative"
+            className="aspect-square w-full bg-black/40 backdrop-blur-md rounded-3xl overflow-hidden shadow-2xl border border-white/5 group relative"
           >
             <AnimatePresence mode="wait">
               {currentTrack ? (
@@ -227,7 +227,7 @@ const MusicPlayer: React.FC = () => {
           <div className="space-y-4">
             <div className="text-center md:text-left">
               <h2 className="text-2xl font-black text-white truncate">{currentTrack?.title || 'No Song Selected'}</h2>
-              <p className="text-[#a1a1aa] font-medium">{currentTrack?.artist || 'Search for music'}</p>
+              <p className="text-text-muted font-medium">{currentTrack?.artist || 'Search for music'}</p>
             </div>
 
             <div className="space-y-2">
@@ -237,9 +237,9 @@ const MusicPlayer: React.FC = () => {
                 max={duration || 0} 
                 value={progress} 
                 onChange={handleSeek}
-                className="w-full h-1 bg-[#1c1c1f] rounded-lg appearance-none cursor-pointer accent-[#ff2644]"
+                className="w-full h-1 bg-surface-hover rounded-lg appearance-none cursor-pointer accent-accent"
               />
-              <div className="flex justify-between text-[10px] font-mono text-[#52525b] uppercase tracking-widest">
+              <div className="flex justify-between text-[10px] font-mono text-text-secondary uppercase tracking-widest">
                 <span>{formatTime(progress)}</span>
                 <span>{formatTime(duration)}</span>
               </div>
@@ -250,7 +250,7 @@ const MusicPlayer: React.FC = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsRepeat(!isRepeat)}
-                className={`transition-colors ${isRepeat ? 'text-[#ff2644]' : 'text-[#52525b] hover:text-white'}`}
+                className={`transition-colors ${isRepeat ? 'text-accent' : 'text-text-secondary hover:text-white'}`}
                 title="Repeat"
               >
                 <Repeat size={20} />
@@ -261,7 +261,7 @@ const MusicPlayer: React.FC = () => {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => skipTime(-10)}
-                  className="text-[#52525b] hover:text-white transition-colors"
+                  className="text-text-secondary hover:text-white transition-colors"
                   title="-10s"
                 >
                   <RotateCcw size={20} />
@@ -281,7 +281,7 @@ const MusicPlayer: React.FC = () => {
                   whileTap={{ scale: 0.95 }}
                   onClick={togglePlay}
                   disabled={!currentTrack}
-                  className="w-14 h-14 bg-[#ff2644] text-white rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(255,38,68,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-14 h-14 bg-accent text-white rounded-full flex items-center justify-center shadow-[0_0_20px_var(--accent-glow)] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <AnimatePresence mode="wait">
                     {isPlaying ? (
@@ -309,7 +309,7 @@ const MusicPlayer: React.FC = () => {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => skipTime(10)}
-                  className="text-[#52525b] hover:text-white transition-colors"
+                  className="text-text-secondary hover:text-white transition-colors"
                   title="+10s"
                 >
                   <RotateCw size={20} />
@@ -322,28 +322,28 @@ const MusicPlayer: React.FC = () => {
         {/* Search & List Section */}
         <div className="flex-1 w-full space-y-6">
           <form onSubmit={searchSongs} className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#52525b] group-focus-within:text-[#ff2644] transition-colors" size={20} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-accent transition-colors" size={20} />
             <input 
               type="text" 
               placeholder="Search for songs, artists, or albums..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-black border border-[#1c1c1f] rounded-2xl py-4 pl-12 pr-4 text-white outline-none focus:border-[#ff2644] transition-all placeholder:text-[#52525b]"
+              className="w-full bg-bg border border-surface-hover rounded-2xl py-4 pl-12 pr-4 text-white outline-none focus:border-accent transition-all placeholder:text-text-secondary"
             />
             {isLoading && (
               <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                <Loader2 className="animate-spin text-[#ff2644]" size={20} />
+                <Loader2 className="animate-spin text-accent" size={20} />
               </div>
             )}
           </form>
 
-          <div className="bg-black border border-[#1c1c1f] rounded-3xl overflow-hidden">
-            <div className="p-6 border-b border-[#1c1c1f] flex items-center justify-between">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-[#a1a1aa]">Music Results</h3>
-              <span className="text-[10px] font-mono text-[#52525b]">{tracks.length} Tracks Found</span>
+          <div className="bg-black/40 backdrop-blur-md border border-surface-hover rounded-3xl overflow-hidden">
+            <div className="p-6 border-b border-surface-hover flex items-center justify-between">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-text-muted">Music Results</h3>
+              <span className="text-[10px] font-mono text-text-secondary">{tracks.length} Tracks Found</span>
             </div>
             
-            <div className="divide-y divide-[#1c1c1f] max-h-[600px] overflow-y-auto custom-scrollbar">
+            <div className="divide-y divide-surface-hover max-h-[600px] overflow-y-auto custom-scrollbar">
               <AnimatePresence mode="wait">
                 {tracks.length > 0 ? (
                   <motion.div 
@@ -363,21 +363,21 @@ const MusicPlayer: React.FC = () => {
                         <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 relative">
                           <img src={track.cover} alt={track.title} className="w-full h-full object-cover" />
                           {currentTrackIndex === index && isPlaying && (
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <div className="absolute inset-0 bg-bg/40 flex items-center justify-center">
                               <div className="flex gap-0.5 items-end h-4">
-                                <div className="w-1 bg-[#ff2644] animate-[music-bar_0.6s_ease-in-out_infinite]" />
-                                <div className="w-1 bg-[#ff2644] animate-[music-bar_0.8s_ease-in-out_infinite_0.1s]" />
-                                <div className="w-1 bg-[#ff2644] animate-[music-bar_0.7s_ease-in-out_infinite_0.2s]" />
+                                <div className="w-1 bg-accent animate-[music-bar_0.6s_ease-in-out_infinite]" />
+                                <div className="w-1 bg-accent animate-[music-bar_0.8s_ease-in-out_infinite_0.1s]" />
+                                <div className="w-1 bg-accent animate-[music-bar_0.7s_ease-in-out_infinite_0.2s]" />
                               </div>
                             </div>
                           )}
                         </div>
                         <div className="flex-1 text-left min-w-0">
-                          <h4 className={`font-bold truncate ${currentTrackIndex === index ? 'text-[#ff2644]' : 'text-white'}`}>{track.title}</h4>
-                          <p className="text-xs text-[#a1a1aa] truncate">{track.artist} • {track.album}</p>
+                          <h4 className={`font-bold truncate ${currentTrackIndex === index ? 'text-accent' : 'text-white'}`}>{track.title}</h4>
+                          <p className="text-xs text-text-muted truncate">{track.artist} • {track.album}</p>
                         </div>
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Play size={16} className="text-[#ff2644]" fill="currentColor" />
+                          <Play size={16} className="text-accent" fill="currentColor" />
                         </div>
                       </motion.button>
                     ))}
@@ -390,12 +390,12 @@ const MusicPlayer: React.FC = () => {
                     exit={{ opacity: 0, scale: 0.9 }}
                     className="p-20 text-center space-y-4"
                   >
-                    <div className="w-20 h-20 bg-[#1c1c1f] rounded-full flex items-center justify-center mx-auto text-[#52525b]">
+                    <div className="w-20 h-20 bg-surface-hover rounded-full flex items-center justify-center mx-auto text-text-secondary">
                       <Search size={32} />
                     </div>
                     <div className="space-y-1">
                       <p className="text-white font-bold">Search Music</p>
-                      <p className="text-xs text-[#52525b]">Find your favorite tracks and listen instantly</p>
+                      <p className="text-xs text-text-secondary">Find Your Favorite Tracks And Llisten Instantly</p>
                     </div>
                   </motion.div>
                 )}

@@ -4,6 +4,7 @@ import { LibraryItem } from '../types';
 import { Loader2 } from 'lucide-react';
 import { fetchPoster } from '../services/posters';
 import { motion } from 'framer-motion';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ItemCardProps {
   item: LibraryItem;
@@ -15,8 +16,22 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, category, onOpenDetails }) =>
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentImageUrl, setCurrentImageUrl] = useState(item.img || '');
   const [isSearching, setIsSearching] = useState(false);
+  const [translatedTitle, setTranslatedTitle] = useState(item.t);
+  const { translateDynamic, language } = useLanguage();
   
   const isPlaceholder = !currentImageUrl || currentImageUrl.includes('placehold.co');
+
+  useEffect(() => {
+    const translate = async () => {
+      if (language === 'en-US') {
+        setTranslatedTitle(item.t);
+        return;
+      }
+      const translated = await translateDynamic(item.t);
+      setTranslatedTitle(translated);
+    };
+    translate();
+  }, [item.t, language, translateDynamic]);
 
   useEffect(() => {
     const getRealPoster = async () => {
@@ -58,11 +73,11 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, category, onOpenDetails }) =>
       whileHover={{ scale: 1.05, y: -5 }}
       whileTap={{ scale: 0.95 }}
       onClick={() => onOpenDetails(item, category)}
-      className="group relative aspect-[2/3] rounded-xl overflow-hidden bg-black transition-all duration-300 hover:shadow-2xl cursor-pointer border border-white/5 hover:border-white/50"
+      className="group relative aspect-[2/3] rounded-xl overflow-hidden bg-bg transition-all duration-300 hover:shadow-2xl cursor-pointer border border-white/5 hover:border-white/50"
     >
       {/* Loading Skeleton */}
       {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black animate-pulse z-10">
+        <div className="absolute inset-0 flex items-center justify-center bg-bg animate-pulse z-10">
           <Loader2 className="text-white animate-spin" size={20} />
         </div>
       )}
@@ -80,7 +95,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, category, onOpenDetails }) =>
       
       <div className="absolute bottom-0 left-0 right-0 p-3">
         <h3 className="text-[10px] font-black text-white uppercase italic tracking-tight leading-tight line-clamp-2">
-          {item.t}
+          {translatedTitle}
         </h3>
       </div>
     </motion.div>

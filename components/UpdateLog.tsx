@@ -45,14 +45,14 @@ const UpdateLog: React.FC<UpdateLogProps> = ({ onClose }) => {
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: -20 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="w-80 max-h-[400px] flex flex-col bg-[#0a0a0a] text-white rounded-xl overflow-hidden shadow-2xl border border-white/10"
+      className="w-80 max-h-[400px] flex flex-col bg-black/60 backdrop-blur-2xl text-white rounded-xl overflow-hidden shadow-2xl border border-white/10"
     >
-      <div className="p-4 border-b border-[#1c1c1f] flex items-center justify-between sticky top-0 bg-[#0a0a0a] z-10">
+      <div className="p-4 border-b border-surface-hover flex items-center justify-between sticky top-0 bg-black/40 backdrop-blur-md z-10">
         <h3 className="font-black uppercase italic tracking-tighter text-lg flex items-center gap-2">
-          <GitCommit size={16} className="text-[#ff2644]" />
+          <GitCommit size={16} className="text-accent" />
           Update Log
         </h3>
-        <button onClick={onClose} className="text-[#52525b] hover:text-white transition-colors">
+        <button onClick={onClose} className="text-text-secondary hover:text-white transition-colors">
           <X size={16} />
         </button>
       </div>
@@ -64,11 +64,11 @@ const UpdateLog: React.FC<UpdateLogProps> = ({ onClose }) => {
         className="overflow-y-auto custom-scrollbar p-4 space-y-6"
       >
         {UPDATES.map((update, idx) => (
-          <motion.div key={idx} variants={itemVariants} className="relative pl-4 border-l border-[#1c1c1f]">
-            <div className="absolute -left-[5px] top-0 w-2.5 h-2.5 rounded-full bg-[#1c1c1f] border border-[#52525b]"></div>
+          <motion.div key={idx} variants={itemVariants} className="relative pl-4 border-l border-surface-hover">
+            <div className="absolute -left-[5px] top-0 w-2.5 h-2.5 rounded-full bg-surface-hover border border-[#52525b]"></div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[#ff2644] font-bold text-xs bg-[#ff2644]/10 px-2 py-0.5 rounded-full border border-[#ff2644]/20">v{update.version}</span>
-              <span className="text-[10px] text-[#52525b] font-mono flex items-center gap-1">
+              <span className="text-accent font-bold text-xs bg-accent/10 px-2 py-0.5 rounded-full border border-accent/20">v{update.version}</span>
+              <span className="text-[10px] text-text-secondary font-mono flex items-center gap-1">
                 <Calendar size={10} />
                 {getDaysAgo(update.date)}
               </span>

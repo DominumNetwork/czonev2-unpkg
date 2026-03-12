@@ -59,3 +59,28 @@ export const getQueryAestheticDescription = async (query: string) => {
     return null;
   }
 };
+
+/**
+ * Uses Gemini to translate text into a target language.
+ */
+export const translateText = async (text: string, targetLanguage: string) => {
+  if (!text || !targetLanguage || targetLanguage === 'en-US') return text;
+
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Translate the following text into ${targetLanguage}. Only return the translated text, nothing else.
+      Text: "${text}"`,
+      config: {
+        systemInstruction: "You are a professional translator. You translate text accurately while maintaining the original tone and context.",
+        temperature: 0.1,
+      }
+    });
+
+    return response.text?.trim() || text;
+  } catch (error) {
+    console.error("Gemini Translation Error:", error);
+    return text;
+  }
+};
