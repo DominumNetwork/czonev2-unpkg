@@ -905,4 +905,5 @@ export const PARTNERS_DATA: PartnerItem[] = [
 
 export const STAFF_DATA: StaffMember[] = [
   { name: "Sols", role: "Owner", img: "https://i.pinimg.com/1200x/90/54/72/9054723fa92af09702e7e72b44f0c232.jpg", link: "https://guns.lol/ohsols" },
+  { name: "xsviiera", role: "Co-Owner", img: "https://cdn.discordapp.com/attachments/1340149996443668522/1476587511928324316/download.gif?ex=69b57148&is=69b41fc8&hm=3320f7c0777178af7f5c4aa33f3c7c8b81b9101445dcd78b99d142433a337004", link: "https://guns.lol/iviera" }
 ];
