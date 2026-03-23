@@ -9,6 +9,11 @@ interface UpdateLogProps {
 
 const UPDATES = [
   {
+    version: "",
+    date: "2026-03-23",
+    changes: ["Invincible Season 4 added"]
+  },
+  {
     version: "1.1.0",
     date: "2026-03-20",
     changes: ["Added Cloaking, Themes, And A Movie In Website"]
@@ -72,7 +77,7 @@ const UpdateLog: React.FC<UpdateLogProps> = ({ onClose }) => {
           <motion.div key={idx} variants={itemVariants} className="relative pl-4 border-l border-surface-hover">
             <div className="absolute -left-[5px] top-0 w-2.5 h-2.5 rounded-full bg-surface-hover border border-[#52525b]"></div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-accent font-bold text-xs bg-accent/10 px-2 py-0.5 rounded-full border border-accent/20">v{update.version}</span>
+              {update.version && <span className="text-accent font-bold text-xs bg-accent/10 px-2 py-0.5 rounded-full border border-accent/20">v{update.version}</span>}
               <span className="text-[10px] text-text-secondary font-mono flex items-center gap-1">
                 <Calendar size={10} />
                 {getDaysAgo(update.date)}

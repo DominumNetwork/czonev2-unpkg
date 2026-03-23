@@ -159,7 +159,7 @@ const App: React.FC = () => {
             >
                 {isSidebarVisible ? <X size={20} /> : <LayoutGrid size={20} />}
             </button>
-            <div className="w-10"></div> {/* Spacer */}
+            <div className="text-xs text-text-secondary">© 2026 ChillZone</div>
         </div>
 
         {isSidebarVisible && (
