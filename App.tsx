@@ -161,6 +161,21 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-bg text-text-primary">
       <div id="app" className="fixed inset-0 flex flex-col overflow-hidden bg-bg text-text-primary">
+        {/* Donation Banner */}
+        <div className="bg-black text-white py-2 px-4 text-sm font-bold z-[60] relative flex items-center shadow-lg border-b border-white/10 overflow-hidden">
+          <div className="flex-1 overflow-hidden relative h-6 flex items-center">
+            <div className="animate-marquee absolute w-full text-left">
+              Donate so I can get a new domain for the schools that are blocked!
+            </div>
+          </div>
+          <button 
+            onClick={() => setActiveCategory('donate')} 
+            className="bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-1 rounded-full text-xs uppercase tracking-wider transition-colors shrink-0 ml-4 z-10 relative"
+          >
+            Donate
+          </button>
+        </div>
+
         {/* Background glows */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
           <div className="absolute -top-40 -right-40 w-[700px] h-[700px] rounded-full opacity-60" style={{ background: 'var(--accent-glow-dim)', filter: 'blur(160px)', transform: 'translateZ(0)' }}></div>
