@@ -9,6 +9,11 @@ interface UpdateLogProps {
 
 const UPDATES = [
   {
+    version: "",
+    date: "2026-03-26",
+    changes: ["JJK Episode 11 and 12 have been added"]
+  },
+  {
     version: "1.2.0",
     date: "2026-03-26",
     changes: ["Added Games 🎮"]
@@ -31,8 +36,9 @@ const UPDATES = [
 ];
 
 const getDaysAgo = (dateStr: string) => {
-  const date = new Date(dateStr);
+  const date = new Date(dateStr + "T00:00:00");
   const now = new Date();
+  now.setHours(0, 0, 0, 0);
   const diffTime = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   return diffDays === 0 ? "Today" : `${diffDays} days ago`;
