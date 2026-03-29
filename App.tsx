@@ -49,8 +49,19 @@ const TranslatedText: React.FC<{ text: string }> = ({ text }) => {
   return <>{translated}</>;
 };
 
+const getInitialCategory = (): Category => {
+  const path = window.location.pathname.substring(1).toLowerCase();
+  const normalizedPath = path.replace('-', ' ') as Category;
+  const validCategories: Category[] = ['home', 'movies', 'tv shows', 'anime', 'manga', 'proxies', 'partners', 'dev', 'support', 'donate', 'apps', 'browser', 'settings', 'music', 'games'];
+  
+  if (validCategories.includes(normalizedPath)) {
+    return normalizedPath;
+  }
+  return 'donate';
+};
+
 const App: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState<Category>('movies');
+  const [activeCategory, setActiveCategory] = useState<Category>(getInitialCategory);
   const [searchQuery, setSearchQuery] = useState('');
   const [proxySearch, setProxySearch] = useState('');
   const [customLogo, setCustomLogo] = useState<string>(DEFAULT_LOGO);
@@ -94,6 +105,29 @@ const App: React.FC = () => {
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  useEffect(() => {
+    const path = activeCategory.replace(' ', '-');
+    if (window.location.pathname !== `/${path}`) {
+      window.history.pushState(null, '', `/${path}`);
+    }
+  }, [activeCategory]);
+  
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname.substring(1).toLowerCase();
+      const normalizedPath = path.replace('-', ' ') as Category;
+      const validCategories: Category[] = ['home', 'movies', 'tv shows', 'anime', 'manga', 'proxies', 'partners', 'dev', 'support', 'donate', 'apps', 'browser', 'settings', 'music', 'games'];
+      
+      if (validCategories.includes(normalizedPath)) {
+        setActiveCategory(normalizedPath);
+      } else {
+        setActiveCategory('donate');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   const handleUpdateLogo = (newLogoUrl: string) => {
