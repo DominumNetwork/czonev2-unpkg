@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './components/Sidebar';
 import LibrarySection from './components/LibrarySection';
-import Settings from './components/Settings';
+import Settings, { defaultThemes } from './components/Settings';
 import MusicPlayer from './components/MusicPlayer';
 import Partners from './components/Partners';
 import UpdateLog from './components/UpdateLog';
@@ -13,11 +13,14 @@ import { MOVIES_DATA, ANIME_DATA, MANGA_DATA, TV_DATA, STAFF_DATA, PARTNERS_DATA
 import { GAME_PAYLOADS } from './gamePayloads';
 import { getEmulatorHtml } from './services/emulatorService';
 import { useLanguage } from './context/LanguageContext';
-import { auth, logout } from './firebase';
+import { auth, logout, db, handleFirestoreError, OperationType } from './firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
+import { doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import AdminDashboard from './components/AdminDashboard';
 import AuthModal from './components/AuthModal';
-import { Search, X, Film, Sparkles, BookOpen, Tv, SearchX, PlayCircle, Star, Globe, Users, ExternalLink, ShieldAlert, Zap, MessageSquare, Activity, Loader2, Book, AlertTriangle, Settings as SettingsIcon, GitCommit, ChevronDown, LayoutGrid, Gamepad2, ShieldCheck, LogOut, LogIn } from 'lucide-react';
+import SuggestionModal from './components/SuggestionModal';
+import { SiteAnnouncements } from './components/SiteAnnouncements';
+import { Search, X, Film, Sparkles, BookOpen, Tv, SearchX, PlayCircle, Star, Globe, Users, ExternalLink, ShieldAlert, Zap, MessageSquare, Activity, Loader2, Book, AlertTriangle, Settings as SettingsIcon, GitCommit, ChevronDown, LayoutGrid, Gamepad2, ShieldCheck, LogOut, LogIn, Send } from 'lucide-react';
 
 const DEFAULT_LOGO = "https://lh7-rt.googleusercontent.com/sitesz/AClOY7psM7n5cC2oRAQVLVss3LsgYFKWwE-KzTjGQvDYtnnp1f1j-Szl1OH6r1pZTXpsw0t_1es0N4P9E2cBl4Oqs-lOwNJdAt3H5CiGxGZKfBTzaYq_ybiI1qd2dWXWu_GRWMqLDD_3BL9tkNhJBNJhjBuuQWyvP1B19h6v0fblyHBwfxs-94c7?key=IannGxLsV9P5UfJ0NHPqqQ";
 
@@ -133,34 +136,124 @@ const App: React.FC = () => {
   const [customLogo, setCustomLogo] = useState<string>(DEFAULT_LOGO);
   const [selectedItem, setSelectedItem] = useState<{item: LibraryItem, category: string, showPlayer: boolean} | null>(null);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
-  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteItem[]>(() => {
+    const saved = localStorage.getItem('chillzone_favorites');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isUpdateLogOpen, setIsUpdateLogOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const { t } = useLanguage();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       console.log("Auth state changed:", currentUser?.email);
       setUser(currentUser);
-      setIsAdmin(currentUser?.email === 'darkfn1234567890@gmail.com');
+      setIsAdmin(currentUser?.email === 'darkfn1234567890@gmail.com' || currentUser?.email === 'whitecaleb888@gmail.com');
+      setIsAuthReady(true);
       if (currentUser) {
         setIsAuthModalOpen(false);
+      } else {
+        setFavorites([]);
+        localStorage.removeItem('chillzone_favorites');
       }
     });
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
+    if (!user || !isAuthReady) return;
+
+    const userDocRef = doc(db, 'users', user.uid);
+    const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.customLogo) {
+          setCustomLogo(data.customLogo);
+          localStorage.setItem('chillzone_custom_logo', data.customLogo);
+        }
+        if (data.favorites) {
+          setFavorites(data.favorites);
+          localStorage.setItem('chillzone_favorites', JSON.stringify(data.favorites));
+        }
+        if (data.theme) {
+          localStorage.setItem('custom_theme_id', data.theme);
+          if (data.customThemes) {
+            localStorage.setItem('custom_themes', data.customThemes);
+          }
+          // Apply theme
+          const savedThemes = localStorage.getItem('custom_themes');
+          const customThemes = savedThemes ? JSON.parse(savedThemes) : { ...defaultThemes };
+          const activeTheme = customThemes[data.theme] || defaultThemes.chillzone;
+          
+          const root = document.documentElement;
+          root.style.setProperty('--bg', activeTheme.colors.bg);
+          root.style.setProperty('--text-primary', activeTheme.colors.textPrimary);
+          root.style.setProperty('--surface', activeTheme.colors.surface);
+          root.style.setProperty('--border', activeTheme.colors.border);
+          root.style.setProperty('--accent', activeTheme.colors.accent);
+          root.style.setProperty('--surface-hover', activeTheme.colors.surfaceHover);
+          
+          const hexToRgb = (hex: string) => {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '255, 0, 0';
+          };
+          
+          const rgb = hexToRgb(activeTheme.colors.accent);
+          root.style.setProperty('--accent-glow', `rgba(${rgb}, 0.3)`);
+          root.style.setProperty('--accent-glow-dim', `rgba(${rgb}, 0.1)`);
+          root.dataset.theme = data.theme;
+        }
+      }
+    }, (err) => {
+      handleFirestoreError(err, OperationType.GET, `users/${user.uid}`);
+    });
+
+    return () => unsubscribe();
+  }, [user, isAuthReady]);
+
+  useEffect(() => {
     const savedLogo = localStorage.getItem('chillzone_custom_logo');
     if (savedLogo) setCustomLogo(savedLogo);
     
-    const savedTheme = localStorage.getItem('theme') || 'default';
-    document.documentElement.dataset.theme = savedTheme;
+    // Load custom theme
+    const currentThemeId = localStorage.getItem('custom_theme_id') || 'chillzone';
+    const savedThemes = localStorage.getItem('custom_themes');
+    const customThemes = savedThemes ? JSON.parse(savedThemes) : { ...defaultThemes };
+    
+    // Merge new default themes if they don't exist in saved themes
+    Object.keys(defaultThemes).forEach(key => {
+      if (!customThemes[key]) {
+        customThemes[key] = defaultThemes[key];
+      }
+    });
+
+    const activeTheme = customThemes[currentThemeId] || defaultThemes.chillzone;
+    
+    const root = document.documentElement;
+    root.style.setProperty('--bg', activeTheme.colors.bg);
+    root.style.setProperty('--text-primary', activeTheme.colors.textPrimary);
+    root.style.setProperty('--surface', activeTheme.colors.surface);
+    root.style.setProperty('--border', activeTheme.colors.border);
+    root.style.setProperty('--accent', activeTheme.colors.accent);
+    root.style.setProperty('--surface-hover', activeTheme.colors.surfaceHover);
+    
+    // Convert hex to rgba for glows
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '255, 0, 0';
+    };
+    
+    const rgb = hexToRgb(activeTheme.colors.accent);
+    root.style.setProperty('--accent-glow', `rgba(${rgb}, 0.3)`);
+    root.style.setProperty('--accent-glow-dim', `rgba(${rgb}, 0.1)`);
+    root.dataset.theme = currentThemeId;
   }, []);
 
   useEffect(() => {
@@ -176,6 +269,8 @@ const App: React.FC = () => {
           setIsAuthModalOpen(false);
         } else if (isAdminOpen) {
           setIsAdminOpen(false);
+        } else if (isSuggestionModalOpen) {
+          setIsSuggestionModalOpen(false);
         }
       }
     };
@@ -219,6 +314,15 @@ const App: React.FC = () => {
   const handleUpdateLogo = (newLogoUrl: string) => {
     setCustomLogo(newLogoUrl);
     localStorage.setItem('chillzone_custom_logo', newLogoUrl);
+    
+    // Sync to Firebase if logged in
+    if (user) {
+      updateDoc(doc(db, 'users', user.uid), {
+        customLogo: newLogoUrl
+      }).catch(err => {
+        handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
+      });
+    }
   };
 
   const handleOpenDetails = (item: LibraryItem, category: string) => {
@@ -231,13 +335,28 @@ const App: React.FC = () => {
     }
   };
 
-  const onToggleFavorite = (item: FavoriteItem) => {
+  const onToggleFavorite = async (item: FavoriteItem) => {
+    let newFavorites: FavoriteItem[];
     setFavorites(prev => {
       const exists = prev.find(f => f.id === item.id);
       if (exists) {
-        return prev.filter(f => f.id !== item.id);
+        newFavorites = prev.filter(f => f.id !== item.id);
+      } else {
+        newFavorites = [...prev, item];
       }
-      return [...prev, item];
+      
+      localStorage.setItem('chillzone_favorites', JSON.stringify(newFavorites));
+      
+      // Sync to Firebase if logged in
+      if (user) {
+        updateDoc(doc(db, 'users', user.uid), {
+          favorites: newFavorites
+        }).catch(err => {
+          handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
+        });
+      }
+      
+      return newFavorites;
     });
   };
 
@@ -281,6 +400,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-bg text-text-primary">
       <ScrambleEffect />
+      <SiteAnnouncements />
       <div id="app" className="fixed inset-0 flex flex-col overflow-hidden bg-bg text-text-primary">
         {/* Donation Banner */}
         <div className="bg-black text-white py-2 px-4 text-sm font-bold z-[60] relative flex items-center shadow-lg border-b border-white/10 overflow-hidden">
@@ -337,6 +457,18 @@ const App: React.FC = () => {
                   title="Admin Dashboard"
                 >
                   <ShieldCheck size={18} />
+                </motion.button>
+              )}
+
+              {user && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsSuggestionModalOpen(true)}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover border border-white/5 text-text-secondary hover:text-white hover:border-white/20 transition-all duration-300"
+                  title="Suggestion Bin"
+                >
+                  <Send size={18} />
                 </motion.button>
               )}
 
@@ -914,6 +1046,11 @@ const App: React.FC = () => {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {isSuggestionModalOpen && (
+          <SuggestionModal onClose={() => setIsSuggestionModalOpen(false)} />
         )}
       </AnimatePresence>
     </div>

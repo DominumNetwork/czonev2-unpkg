@@ -89,6 +89,54 @@ app.get('/api/music/songs/:id', async (req, res) => {
   }
 });
 
+app.get('/api/music/monochrome/search', async (req, res) => {
+  try {
+    const query = req.query.s as string;
+    if (!query) return res.status(400).json({ error: 'Query required' });
+    
+    const response = await fetch(`https://api.monochrome.tf/search?s=${encodeURIComponent(query)}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        'Referer': 'https://monochrome.tf/'
+      }
+    });
+    
+    if (!response.ok) {
+      return res.status(response.status).json({ error: `Monochrome search failed: ${response.status}` });
+    }
+    
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Monochrome search proxy error:', error);
+    res.status(500).json({ error: 'Failed to fetch monochrome search' });
+  }
+});
+
+app.get('/api/music/monochrome/track/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const quality = req.query.quality || 'HIGH';
+    
+    const response = await fetch(`https://api.monochrome.tf/track?id=${id}&quality=${quality}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        'Referer': 'https://monochrome.tf/'
+      }
+    });
+    
+    if (!response.ok) {
+      return res.status(response.status).json({ error: `Monochrome track failed: ${response.status}` });
+    }
+    
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Monochrome track proxy error:', error);
+    res.status(500).json({ error: 'Failed to fetch monochrome track' });
+  }
+});
+
 // Session configuration for iframe compatibility
 app.use(session({
   secret: process.env.SESSION_SECRET || 'secret-key',

@@ -14,6 +14,10 @@ service cloud.firestore {
     //   - photoURL: string (optional, url) - The user's profile photo URL
     //   - role: string (required, enum: ['admin', 'user']) - The user's role
     //   - createdAt: timestamp (required) - When the user profile was created
+    //   - favorites: list (optional) - User's favorite items
+    //   - theme: string (optional) - User's preferred theme ID
+    //   - customThemes: string (optional) - JSON stringified custom themes
+    //   - customLogo: string (optional) - User's custom logo URL
     //
     // Collection: site_announcements
     // Document ID: announcementId
@@ -24,6 +28,16 @@ service cloud.firestore {
     //   - authorId: string (required) - Admin UID
     //   - createdAt: timestamp (required) - Creation time
     //   - active: bool (required) - Status
+    //
+    // Collection: suggestions
+    // Document ID: suggestionId
+    // Fields:
+    //   - id: string (optional) - Unique ID
+    //   - userId: string (required) - User UID
+    //   - userEmail: string (required, email) - User email
+    //   - text: string (required, max 2000 chars) - Suggestion text
+    //   - createdAt: timestamp (required) - Creation time
+    //   - status: string (required, enum: ['pending', 'reviewed']) - Status
     //
     // ===============================================================
 
@@ -42,7 +56,8 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() && (
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-        (request.auth.token.email == "darkfn1234567890@gmail.com" && request.auth.token.email_verified == true)
+        (request.auth.token.email == "darkfn1234567890@gmail.com" && request.auth.token.email_verified == true) ||
+        (request.auth.token.email == "whitecaleb888@gmail.com" && request.auth.token.email_verified == true)
       );
     }
 
@@ -60,12 +75,16 @@ service cloud.firestore {
 
     function isValidUser(data) {
       return data.keys().hasAll(['uid', 'email', 'role', 'createdAt']) &&
-             data.keys().hasOnly(['uid', 'email', 'displayName', 'photoURL', 'role', 'createdAt']) &&
+             data.keys().hasOnly(['uid', 'email', 'displayName', 'photoURL', 'role', 'createdAt', 'favorites', 'theme', 'customThemes', 'customLogo']) &&
              data.uid == request.auth.uid &&
              data.email == request.auth.token.email &&
              isValidEmail(data.email) &&
              data.role in ['admin', 'user'] &&
-             (data.photoURL == null || isValidUrl(data.photoURL));
+             (!('photoURL' in data) || data.photoURL == null || isValidUrl(data.photoURL)) &&
+             (!('favorites' in data) || data.favorites is list) &&
+             (!('theme' in data) || data.theme is string) &&
+             (!('customThemes' in data) || data.customThemes is string) &&
+             (!('customLogo' in data) || data.customLogo is string);
     }
 
     function isValidAnnouncement(data) {
@@ -75,6 +94,15 @@ service cloud.firestore {
              data.content is string && data.content.size() > 0 && data.content.size() <= 1000 &&
              data.authorId == request.auth.uid &&
              data.active is bool;
+    }
+
+    function isValidSuggestion(data, isCreate) {
+      return data.keys().hasAll(['userId', 'userEmail', 'text', 'createdAt', 'status']) &&
+             data.keys().hasOnly(['id', 'userId', 'userEmail', 'text', 'createdAt', 'status']) &&
+             (isCreate ? (data.userId == request.auth.uid && data.userEmail == request.auth.token.email) : true) &&
+             isValidEmail(data.userEmail) &&
+             data.text is string && data.text.size() > 0 && data.text.size() <= 2000 &&
+             data.status in ['pending', 'reviewed'];
     }
 
     // ===============================================================
@@ -89,7 +117,15 @@ service cloud.firestore {
 
     match /site_announcements/{announcementId} {
       allow read: if true;
-      allow write: if isAdmin() && isValidAnnouncement(request.resource.data);
+      allow create, update: if isAdmin() && isValidAnnouncement(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /suggestions/{suggestionId} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && isValidSuggestion(request.resource.data, true) && request.resource.data.status == 'pending';
+      allow update: if isAdmin() && isValidSuggestion(request.resource.data, false) && request.resource.data.userId == resource.data.userId && request.resource.data.userEmail == resource.data.userEmail && request.resource.data.text == resource.data.text && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
     }
 
     match /test/connection {

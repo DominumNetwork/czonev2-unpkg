@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Trash2, Edit2, Save, AlertCircle, CheckCircle2, ShieldCheck, Users, Megaphone, Activity } from 'lucide-react';
+import { X, Plus, Trash2, Edit2, Save, AlertCircle, CheckCircle2, ShieldCheck, Users, Megaphone, Activity, Send, Check } from 'lucide-react';
 import { db, auth, OperationType, handleFirestoreError } from '../firebase';
 import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 
@@ -13,18 +13,28 @@ interface Announcement {
   active: boolean;
 }
 
+interface Suggestion {
+  id: string;
+  userId: string;
+  userEmail: string;
+  text: string;
+  createdAt: Timestamp;
+  status: 'pending' | 'reviewed';
+}
+
 interface AdminDashboardProps {
   onClose: () => void;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'announcements' | 'stats' | 'users'>('announcements');
+  const [activeTab, setActiveTab] = useState<'announcements' | 'suggestions' | 'stats' | 'users'>('announcements');
 
   useEffect(() => {
     const q = query(collection(db, 'site_announcements'), orderBy('createdAt', 'desc'));
@@ -38,7 +48,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
       handleFirestoreError(err, OperationType.LIST, 'site_announcements');
     });
 
-    return () => unsubscribe();
+    const qSuggestions = query(collection(db, 'suggestions'), orderBy('createdAt', 'desc'));
+    const unsubscribeSuggestions = onSnapshot(qSuggestions, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Suggestion[];
+      setSuggestions(data);
+    }, (err) => {
+      handleFirestoreError(err, OperationType.LIST, 'suggestions');
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeSuggestions();
+    };
   }, []);
 
   const handleAddAnnouncement = async (e: React.FormEvent) => {
@@ -70,7 +94,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   };
 
   const handleDeleteAnnouncement = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this announcement?')) return;
     try {
       await deleteDoc(doc(db, 'site_announcements', id));
     } catch (err) {
@@ -85,6 +108,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
       });
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `site_announcements/${id}`);
+    }
+  };
+
+  const handleMarkSuggestionReviewed = async (id: string) => {
+    try {
+      await updateDoc(doc(db, 'suggestions', id), {
+        status: 'reviewed'
+      });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `suggestions/${id}`);
+    }
+  };
+
+  const handleDeleteSuggestion = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'suggestions', id));
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `suggestions/${id}`);
     }
   };
 
@@ -110,16 +151,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-white/5 px-6">
+      <div className="flex border-b border-white/5 px-6 overflow-x-auto custom-scrollbar">
         {[
           { id: 'announcements', icon: Megaphone, label: 'Announcements' },
+          { id: 'suggestions', icon: Send, label: 'Suggestions' },
           { id: 'stats', icon: Activity, label: 'Site Stats' },
           { id: 'users', icon: Users, label: 'User Management' }
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-2 px-4 py-4 text-xs font-black uppercase tracking-widest transition-all relative ${
+            className={`flex items-center gap-2 px-4 py-4 text-xs font-black uppercase tracking-widest transition-all relative whitespace-nowrap ${
               activeTab === tab.id ? 'text-accent' : 'text-neutral-500 hover:text-white'
             }`}
           >
@@ -223,6 +265,52 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                 ))
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'suggestions' && (
+          <div className="space-y-4">
+            <h3 className="text-sm font-black uppercase tracking-widest text-neutral-500">User Suggestions</h3>
+            {suggestions.length === 0 ? (
+              <div className="text-center py-12 text-neutral-600 italic text-sm">No suggestions found.</div>
+            ) : (
+              suggestions.map((suggestion) => (
+                <div key={suggestion.id} className="bg-white/5 border border-white/5 rounded-2xl p-5 flex items-start justify-between group hover:border-white/10 transition-all">
+                  <div className="space-y-2 flex-1 pr-4">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-white text-sm">{suggestion.userEmail}</h4>
+                      <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${
+                        suggestion.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-green-500/20 text-green-500'
+                      }`}>
+                        {suggestion.status}
+                      </span>
+                    </div>
+                    <p className="text-sm text-neutral-300 leading-relaxed break-words">{suggestion.text}</p>
+                    <p className="text-[9px] font-mono text-neutral-600">
+                      {suggestion.createdAt?.toDate().toLocaleString() || 'Just now'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                    {suggestion.status === 'pending' && (
+                      <button 
+                        onClick={() => handleMarkSuggestionReviewed(suggestion.id)}
+                        className="p-2 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-500 transition-colors"
+                        title="Mark as Reviewed"
+                      >
+                        <Check size={14} />
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => handleDeleteSuggestion(suggestion.id)}
+                      className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors"
+                      title="Delete Suggestion"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
 

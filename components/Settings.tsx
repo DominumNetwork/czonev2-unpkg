@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { VenetianMask, Palette, ChevronDown, Edit2, X, ExternalLink, Globe } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
+import { auth, db, handleFirestoreError, OperationType } from '../firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
-type ThemeColors = {
+export type ThemeColors = {
   bg: string;
   textPrimary: string;
   surface: string;
@@ -12,13 +14,13 @@ type ThemeColors = {
   surfaceHover: string;
 };
 
-type Theme = {
+export type Theme = {
   id: string;
   name: string;
   colors: ThemeColors;
 };
 
-const defaultThemes: Record<string, Theme> = {
+export const defaultThemes: Record<string, Theme> = {
   chillzone: {
     id: 'chillzone',
     name: 'ChillZone (Default)',
@@ -395,6 +397,16 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
 
     localStorage.setItem('custom_theme_id', currentThemeId);
     localStorage.setItem('custom_themes', JSON.stringify(customThemes));
+    
+    // Sync to Firebase if logged in
+    if (auth.currentUser) {
+      updateDoc(doc(db, 'users', auth.currentUser.uid), {
+        theme: currentThemeId,
+        customThemes: JSON.stringify(customThemes)
+      }).catch(err => {
+        handleFirestoreError(err, OperationType.UPDATE, `users/${auth.currentUser?.uid}`);
+      });
+    }
   }, [activeTheme, currentThemeId, customThemes]);
 
   const handleColorChange = (key: keyof ThemeColors, color: string) => {

@@ -3,12 +3,13 @@ import { Search, Play, Pause, SkipBack, SkipForward, Repeat, Volume2, Music, Loa
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Track {
-  id: number;
+  id: string | number;
   title: string;
   artist: string;
   album: string;
   cover: string;
   streamUrl?: string;
+  source?: string;
 }
 
 const containerVariants = {
@@ -45,7 +46,14 @@ const MusicPlayer: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`https://api.monochrome.tf/search?s=${encodeURIComponent(searchQuery)}`);
+      // Try monochrome proxy first
+      let response = await fetch(`/api/music/monochrome/search?s=${encodeURIComponent(searchQuery)}`);
+      
+      if (!response.ok) {
+        console.warn('Monochrome search failed, trying Saavn...');
+        // Fallback to Saavn proxy
+        response = await fetch(`/api/music/search?q=${encodeURIComponent(searchQuery)}`);
+      }
       
       if (!response.ok) {
         throw new Error(`API request failed with status ${response.status}`);
@@ -53,26 +61,45 @@ const MusicPlayer: React.FC = () => {
       
       const data = await response.json();
       
-      if (!data.data || !data.data.items) {
-        console.error('Invalid API response:', data);
-        setTracks([]);
-        return;
-      }
+      let formattedTracks: Track[] = [];
 
-      const formattedTracks: Track[] = data.data.items.map((item: any) => ({
-        id: item.id,
-        title: item.title,
-        artist: item.artist.name,
-        album: item.album.title,
-        cover: `https://resources.tidal.com/images/${item.album.cover.replace(/-/g, '/')}/640x640.jpg`,
-        streamUrl: undefined // Will be fetched on play
-      }));
+      // Handle Monochrome response
+      if (data.data && data.data.items) {
+        formattedTracks = data.data.items.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          artist: item.artist.name,
+          album: item.album.title,
+          cover: `https://resources.tidal.com/images/${item.album.cover.replace(/-/g, '/')}/640x640.jpg`,
+          streamUrl: undefined,
+          source: 'monochrome'
+        }));
+      } 
+      // Handle Saavn response (jiosaavn-api.vercel.app or saavn.dev)
+      else if (data.data && data.data.results) {
+        formattedTracks = data.data.results.map((item: any) => ({
+          id: item.id,
+          title: item.name,
+          artist: item.artists?.primary?.[0]?.name || item.artist || 'Unknown Artist',
+          album: item.album?.name || 'Unknown Album',
+          cover: item.image?.[2]?.link || item.image?.[2]?.url || item.image?.[0]?.link || '',
+          streamUrl: item.downloadUrl?.[4]?.link || item.downloadUrl?.[4]?.url || undefined,
+          source: 'saavn'
+        }));
+      } else if (Array.isArray(data)) {
+         // Some Saavn APIs return array directly
+         formattedTracks = data.map((item: any) => ({
+          id: item.id,
+          title: item.song || item.name,
+          artist: item.singers || item.artist || 'Unknown Artist',
+          album: item.album || 'Unknown Album',
+          cover: item.image,
+          streamUrl: item.media_url || undefined,
+          source: 'saavn'
+        }));
+      }
 
       setTracks(formattedTracks);
-      if (formattedTracks.length > 0 && currentTrackIndex === null) {
-        // Don't auto-play on search, just show results
-        // setCurrentTrackIndex(0); 
-      }
     } catch (error) {
       console.error('Error searching music:', error);
     } finally {
@@ -80,12 +107,43 @@ const MusicPlayer: React.FC = () => {
     }
   };
 
-  const fetchStreamUrl = async (trackId: number) => {
+  const fetchStreamUrl = async (trackId: string | number, source: string = 'monochrome') => {
     try {
-      const response = await fetch(`https://api.monochrome.tf/track?id=${trackId}&quality=HIGH`);
+      if (source === 'saavn') {
+        // For Saavn, we might already have the URL or we need to fetch it from our proxy
+        const response = await fetch(`/api/music/songs/${trackId}`);
+        if (response.ok) {
+          const data = await response.json();
+          const song = data.data?.[0] || data[0] || data;
+          return song.downloadUrl?.[4]?.link || song.downloadUrl?.[4]?.url || song.media_url || null;
+        }
+        return null;
+      }
+
+      // Monochrome logic
+      const response = await fetch(`/api/music/monochrome/track/${trackId}?quality=HIGH`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch track info: ${response.status}`);
+      }
       const data = await response.json();
-      const manifest = JSON.parse(atob(data.data.manifest));
-      return manifest.urls[0];
+      
+      if (!data || !data.data || !data.data.manifest) {
+        console.error('Invalid track data received:', data);
+        return null;
+      }
+
+      try {
+        const manifest = JSON.parse(atob(data.data.manifest));
+        if (!manifest || !manifest.urls || manifest.urls.length === 0) {
+          console.error('No stream URLs found in manifest:', manifest);
+          return null;
+        }
+        
+        return manifest.urls[0];
+      } catch (e) {
+        console.error('Error parsing manifest:', e);
+        return null;
+      }
     } catch (error) {
       console.error('Error fetching stream URL:', error);
       return null;
@@ -96,12 +154,11 @@ const MusicPlayer: React.FC = () => {
     const track = tracks[index];
     if (!track.streamUrl) {
       setIsLoading(true);
-      const url = await fetchStreamUrl(track.id);
+      const url = await fetchStreamUrl(track.id, (track as any).source);
       if (url) {
         const newTracks = [...tracks];
         newTracks[index] = { ...track, streamUrl: url };
         setTracks(newTracks);
-        // Update current track ref indirectly by state update, but we need to play it now
         if (audioRef.current) {
             audioRef.current.src = url;
             audioRef.current.play().catch(e => console.error("Playback failed", e));

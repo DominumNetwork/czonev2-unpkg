@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot, query, orderBy, limit, getDocFromServer, FirestoreError, serverTimestamp } from 'firebase/firestore';
 import firebaseConfig from './firebase-applet-config.json';
 
@@ -7,6 +7,7 @@ import firebaseConfig from './firebase-applet-config.json';
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
+setPersistence(auth, browserLocalPersistence).catch(console.error);
 export const googleProvider = new GoogleAuthProvider();
 
 export const signInWithGoogle = async () => {
@@ -24,7 +25,7 @@ export const signInWithGoogle = async () => {
         email: result.user.email,
         displayName: result.user.displayName,
         photoURL: result.user.photoURL,
-        role: result.user.email === 'darkfn1234567890@gmail.com' ? 'admin' : 'user',
+        role: (result.user.email === 'darkfn1234567890@gmail.com' || result.user.email === 'whitecaleb888@gmail.com') ? 'admin' : 'user',
         createdAt: serverTimestamp()
       });
     }
@@ -48,7 +49,7 @@ export const signUpWithEmail = async (email: string, pass: string, username: str
       uid: result.user.uid,
       email: result.user.email,
       displayName: username,
-      role: result.user.email === 'darkfn1234567890@gmail.com' ? 'admin' : 'user',
+      role: (result.user.email === 'darkfn1234567890@gmail.com' || result.user.email === 'whitecaleb888@gmail.com') ? 'admin' : 'user',
       createdAt: serverTimestamp()
     });
     
