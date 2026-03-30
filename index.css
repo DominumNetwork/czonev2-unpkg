@@ -62,6 +62,16 @@
   --surface-active: #444411;
 }
 
+[data-theme="halloween"] {
+  --accent: #ff7518;
+  --accent-glow: rgba(255, 117, 24, 0.3);
+  --accent-glow-dim: rgba(255, 117, 24, 0.1);
+  --bg: #0a0a0a;
+  --surface: #1a0f00;
+  --surface-hover: #2a1a00;
+  --surface-active: #3a2500;
+}
+
 [data-theme="aprilfools"] {
   --font-sans: "Comic Sans MS", "Comic Sans", cursive !important;
 }

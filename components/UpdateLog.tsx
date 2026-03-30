@@ -11,7 +11,7 @@ const UPDATES = [
   {
     version: "1.3.0",
     date: "2026-03-30",
-    changes: ["New Theme Added- April Fools Theme 🤡"]
+    changes: ["New Theme Added- April Fools Theme 🤡", "New Theme Added- Halloween Theme 🎃"]
   },
   {
     version: "",

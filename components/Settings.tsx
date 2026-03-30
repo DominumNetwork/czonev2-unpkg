@@ -103,6 +103,18 @@ const defaultThemes: Record<string, Theme> = {
       surfaceHover: '#2e1065',
     }
   },
+  halloween: {
+    id: 'halloween',
+    name: 'Halloween',
+    colors: {
+      bg: '#0a0a0a',
+      textPrimary: '#ffffff',
+      surface: '#1a0f00',
+      border: '#2a1a00',
+      accent: '#ff7518',
+      surfaceHover: '#2a1a00',
+    }
+  },
   aprilfools: {
     id: 'aprilfools',
     name: 'April Fools',

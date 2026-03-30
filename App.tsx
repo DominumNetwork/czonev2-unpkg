@@ -371,7 +371,7 @@ const App: React.FC = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setIsUpdateLogOpen(!isUpdateLogOpen)} 
-                  className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all duration-300 ${
+                  className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all duration-300 relative ${
                     isUpdateLogOpen 
                       ? 'bg-accent border-accent text-white' 
                       : 'bg-surface-hover border-white/5 text-text-secondary hover:text-white hover:border-white/20'
@@ -406,7 +406,7 @@ const App: React.FC = () => {
                 href="http://discord.gg/cuHARsXESW" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover border border-white/5 text-text-secondary hover:text-[#5865F2] hover:border-[#5865F2]/50 transition-all duration-300"
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover border border-white/5 text-text-secondary hover:text-[#5865F2] hover:border-[#5865F2]/50 transition-all duration-300 relative"
                 title="Discord"
               >
                 <DiscordIcon size={18} />
@@ -416,7 +416,7 @@ const App: React.FC = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setIsSettingsOpen(!isSettingsOpen)} 
-                  className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all duration-300 ${
+                  className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all duration-300 relative ${
                     isSettingsOpen 
                       ? 'bg-accent border-accent text-white' 
                       : 'bg-surface-hover border-white/5 text-text-secondary hover:text-white hover:border-white/20'

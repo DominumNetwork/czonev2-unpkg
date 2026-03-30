@@ -1,5 +1,5 @@
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Home, Film, Tv, Sparkles, BookOpen, Heart, Camera, Globe, Users, DollarSign, Gamepad2, LayoutGrid, Settings as SettingsIcon, Shield, Code, Music, Database } from 'lucide-react';
 import { Category } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -92,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, on
                   isActive ? 'text-accent' : 'text-text-secondary hover:text-white'
                 }`}
               >
-                <div className={`p-2.5 rounded-xl transition-all duration-300 ${
+                <div className={`p-2.5 rounded-xl transition-all duration-300 relative ${
                   isActive ? 'bg-accent/10 shadow-[0_0_15px_rgba(255,0,0,0.2)]' : 'group-hover:bg-white/5'
                 }`}>
                   <Icon size={22} />
