@@ -106,6 +106,42 @@ app.use(session({
 // Web Proxy Route removed
 
 
+// Custom 404 for /donate to simulate GitHub Pages error on refresh (April Fools)
+app.get('/donate', (req, res, next) => {
+  // Only intercept if it's a direct browser request (not an internal SPA transition)
+  // In a real refresh, the browser sends 'text/html' in Accept header
+  if (req.accepts('html')) {
+    return res.status(404).send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Page not found &middot; GitHub Pages</title>
+          <style>
+            body { background-color: #f1f1f1; color: #333; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-size: 14px; line-height: 1.5; margin: 0; }
+            .container { margin: 50px auto; max-width: 600px; text-align: center; padding: 0 20px; }
+            h1 { font-size: 24px; font-weight: 500; margin-top: 0; }
+            p { margin: 10px 0; color: #666; }
+            a { color: #4078c0; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>404</h1>
+            <p><strong>File not found</strong></p>
+            <p>The site configured at this address does not contain the requested file.</p>
+            <p>If this is your site, make sure that the filename case matches the URL as well as any file permissions.</p>
+            <p>For root URLs (like http://example.com/) you must provide an index.html file.</p>
+            <p><a href="https://help.github.com/articles/using-github-pages/">Read the full documentation</a> for more information about using GitHub Pages.</p>
+          </div>
+        </body>
+      </html>
+    `);
+  }
+  next();
+});
+
 async function startServer() {
   const isProd = process.env.NODE_ENV === 'production';
   console.log(`Starting server in ${isProd ? 'production' : 'development'} mode...`);
