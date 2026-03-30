@@ -7,6 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import { BetaAnalyticsDataClient } from '@google-analytics/data';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,6 +20,31 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
+
+// GA4 Proxy Route
+app.get('/api/analytics/data', async (req, res) => {
+  try {
+    const propertyId = '527976762'; // From the URL
+    if (!process.env.GA4_SERVICE_ACCOUNT_JSON) {
+        return res.status(500).json({ error: 'GA4 credentials not configured' });
+    }
+    const analyticsDataClient = new BetaAnalyticsDataClient({
+        credentials: JSON.parse(process.env.GA4_SERVICE_ACCOUNT_JSON)
+    });
+
+    const [response] = await analyticsDataClient.runReport({
+      property: `properties/${propertyId}`,
+      dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+      metrics: [{ name: 'activeUsers' }],
+      dimensions: [{ name: 'date' }],
+    });
+
+    res.json(response);
+  } catch (error) {
+    console.error('GA4 error:', error);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
 
 // Music Proxy Routes
 app.get('/api/music/search', async (req, res) => {

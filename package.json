@@ -6,11 +6,12 @@
   "scripts": {
     "start": "node server.ts",
     "dev": "tsx server.ts",
-    "build": "vite build",
+    "build": "rm -rf dist && vite build && cp server.ts dist/server.ts",
     "preview": "vite preview",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@google-analytics/data": "^5.2.1",
     "@google/genai": "^1.43.0",
     "@tailwindcss/vite": "^4.2.1",
     "axios": "^1.13.6",

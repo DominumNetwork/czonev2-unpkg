@@ -43,7 +43,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'announcements' | 'suggestions' | 'stats' | 'users' | 'admins'>('announcements');
+  const [activeTab, setActiveTab] = useState<'announcements' | 'suggestions' | 'stats' | 'users' | 'admins' | 'analytics'>('announcements');
   const [isAppOwner, setIsAppOwner] = useState(false);
 
   useEffect(() => {
@@ -221,6 +221,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
           { id: 'announcements', icon: Megaphone, label: 'Announcements' },
           { id: 'suggestions', icon: Send, label: 'Suggestions' },
           { id: 'stats', icon: Activity, label: 'Site Stats' },
+          { id: 'analytics', icon: Activity, label: 'Analytics' },
           { id: 'users', icon: Users, label: 'User Management' },
           ...(isAppOwner ? [{ id: 'admins', icon: ShieldCheck, label: 'Manage Admins' }] : [])
         ].map((tab) => (
@@ -479,9 +480,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
             </div>
           </div>
         )}
+        {activeTab === 'analytics' && (
+          <AnalyticsTab />
+        )}
       </div>
     </div>
   );
 };
+
+const AnalyticsTab = () => {
+    const [data, setData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        fetch('/api/analytics/data')
+            .then(res => res.json())
+            .then(data => {
+                setData(data);
+                setLoading(false);
+            });
+    }, []);
+    if (loading) return <div className="p-6 text-center text-neutral-500">Loading analytics...</div>;
+    return <div className="p-6 text-white"><pre className="text-xs">{JSON.stringify(data, null, 2)}</pre></div>;
+}
 
 export default AdminDashboard;
