@@ -1,6 +1,6 @@
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Home, Film, Tv, Sparkles, BookOpen, Heart, Camera, Globe, Users, DollarSign, Gamepad2, LayoutGrid, Settings as SettingsIcon, Shield, Code, Music, Database, MessageSquare } from 'lucide-react';
+import { Home, Film, Tv, Sparkles, BookOpen, Heart, Camera, Globe, Users, DollarSign, Gamepad2, LayoutGrid, Settings as SettingsIcon, Shield, Code, Music, Database, MessageSquare, ShieldCheck } from 'lucide-react';
 import { Category } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
@@ -10,9 +10,10 @@ interface SidebarProps {
   onSelect: (category: Category) => void;
   logoUrl: string;
   onLogoChange: (newLogo: string) => void;
+  isAdmin?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, onLogoChange }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, onLogoChange, isAdmin }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
   const [isHovered, setIsHovered] = useState(false);
@@ -36,6 +37,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, on
   const navItems = [
     { id: 'donate' as Category, label: 'Donate', icon: DollarSign },
     { id: 'support' as Category, label: 'Devs', icon: Heart },
+    { id: 'chat' as Category, label: 'Chat', icon: MessageSquare },
+    ...(isAdmin ? [{ id: 'admin-chat' as Category, label: 'Admin Chat', icon: ShieldCheck }] : []),
     { id: 'games' as Category, label: 'Games', icon: Gamepad2 },
     { id: 'movies' as Category, label: 'Movies', icon: Film },
     { id: 'tv shows' as Category, label: 'TV', icon: Tv },
@@ -44,7 +47,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, on
     { id: 'music' as Category, label: 'Music', icon: Music },
     { id: 'proxies' as Category, label: 'Proxies', icon: Shield },
     { id: 'partners' as Category, label: 'Partners', icon: Users },
-    { id: 'chat' as Category, label: 'Chat', icon: MessageSquare },
   ];
 
   return (

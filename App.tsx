@@ -156,7 +156,7 @@ const App: React.FC = () => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       console.log("Auth state changed:", currentUser?.email);
       setUser(currentUser);
-      setIsAdmin(currentUser?.email === 'darkfn1234567890@gmail.com' || currentUser?.email === 'whitecaleb888@gmail.com');
+      setIsAdmin(currentUser?.email === 'darkfn1234567890@gmail.com' || currentUser?.email === 'whitecaleb888@gmail.com' || currentUser?.email === 'calebwhite2@chisd.net')
       setIsAuthReady(true);
       if (currentUser) {
         setIsAuthModalOpen(false);
@@ -441,6 +441,7 @@ const App: React.FC = () => {
             onSelect={(cat) => { setActiveCategory(cat); setSearchQuery(''); setIsSettingsOpen(false); }} 
             logoUrl={customLogo} 
             onLogoChange={handleUpdateLogo}
+            isAdmin={isAdmin}
             />
         )}
         
@@ -774,6 +775,9 @@ const App: React.FC = () => {
                     )}
                     {activeCategory === 'chat' && (
                       user ? <ChatRoom /> : <div className="text-center py-20 text-text-muted">Please sign up to access the chat room.</div>
+                    )}
+                    {activeCategory === 'admin-chat' && (
+                      isAdmin ? <ChatRoom collectionName="admin_chat" /> : <div className="text-center py-20 text-text-muted">Authorized personnel only.</div>
                     )}
                     {activeCategory === 'movies' && <LibrarySection title={t('Movies')} items={MOVIES_DATA} category="movie" searchQuery="" onOpenDetails={handleOpenDetails} showSearch={true} />}
                     {activeCategory === 'tv shows' && <LibrarySection title={t('TV Shows')} items={TV_DATA} category="tv" searchQuery="" onOpenDetails={handleOpenDetails} showSearch={true} />}

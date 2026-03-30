@@ -3,7 +3,11 @@ import { db, auth } from '../firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { Send, Trash2, Edit2, Check, X } from 'lucide-react';
 
-const ChatRoom: React.FC = () => {
+interface ChatRoomProps {
+  collectionName?: string;
+}
+
+const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat' }) => {
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -11,12 +15,12 @@ const ChatRoom: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const q = query(collection(db, 'chat'), orderBy('createdAt', 'asc'));
+    const q = query(collection(db, collectionName), orderBy('createdAt', 'asc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
     return unsubscribe;
-  }, []);
+  }, [collectionName]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -26,7 +30,7 @@ const ChatRoom: React.FC = () => {
     e.preventDefault();
     if (!newMessage.trim() || !auth.currentUser) return;
 
-    await addDoc(collection(db, 'chat'), {
+    await addDoc(collection(db, collectionName), {
       text: newMessage,
       createdAt: serverTimestamp(),
       uid: auth.currentUser.uid,
@@ -36,7 +40,7 @@ const ChatRoom: React.FC = () => {
   };
 
   const deleteMessage = async (id: string) => {
-    await deleteDoc(doc(db, 'chat', id));
+    await deleteDoc(doc(db, collectionName, id));
   };
 
   const startEdit = (id: string, text: string) => {
@@ -45,7 +49,7 @@ const ChatRoom: React.FC = () => {
   };
 
   const saveEdit = async (id: string) => {
-    await updateDoc(doc(db, 'chat', id), { text: editValue });
+    await updateDoc(doc(db, collectionName, id), { text: editValue });
     setEditingMessageId(null);
     setEditValue('');
   };

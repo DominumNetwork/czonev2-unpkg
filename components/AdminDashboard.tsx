@@ -556,8 +556,9 @@ const AnalyticsTab = () => {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        console.log('Fetching analytics from:', import.meta.env.VITE_API_URL || window.location.origin);
-        fetch(`${import.meta.env.VITE_API_URL || window.location.origin}/api/analytics/data`)
+        const apiUrl = (import.meta as any).env?.VITE_API_URL || window.location.origin;
+        console.log('Fetching analytics from:', apiUrl);
+        fetch(`${apiUrl}/api/analytics/data`)
             .then(res => {
                 console.log('Response status:', res.status);
                 if (!res.ok) throw new Error('Failed to fetch analytics');
