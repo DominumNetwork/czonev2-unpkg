@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, setPersistence, browserLocalPersistence } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot, query, orderBy, limit, getDocFromServer, FirestoreError, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot, query, where, getDocs, orderBy, limit, getDocFromServer, FirestoreError, serverTimestamp } from 'firebase/firestore';
 import firebaseConfig from './firebase-applet-config.json';
 
 // Initialize Firebase SDK
@@ -20,12 +20,20 @@ export const signInWithGoogle = async () => {
     const docSnap = await getDoc(userDoc);
     if (!docSnap.exists()) {
       console.log("Creating new user document for:", result.user.email);
+      
+      // Check if user is an allowed admin
+      let isAllowedAdmin = false;
+      if (result.user.email) {
+        const allowedAdminDoc = await getDoc(doc(db, 'allowed_admins', result.user.email.toLowerCase()));
+        isAllowedAdmin = allowedAdminDoc.exists();
+      }
+      
       await setDoc(userDoc, {
         uid: result.user.uid,
-        email: result.user.email,
-        displayName: result.user.displayName,
-        photoURL: result.user.photoURL,
-        role: (result.user.email === 'darkfn1234567890@gmail.com' || result.user.email === 'whitecaleb888@gmail.com') ? 'admin' : 'user',
+        email: result.user.email || null,
+        displayName: result.user.displayName || null,
+        photoURL: result.user.photoURL || null,
+        role: (result.user.email === 'darkfn1234567890@gmail.com' || result.user.email === 'whitecaleb888@gmail.com' || isAllowedAdmin) ? 'admin' : 'user',
         createdAt: serverTimestamp()
       });
     }
@@ -45,11 +53,20 @@ export const signUpWithEmail = async (email: string, pass: string, username: str
     
     // Create user doc
     console.log("Creating user document for:", email);
+    
+    // Check if user is an allowed admin
+    let isAllowedAdmin = false;
+    if (email) {
+      const allowedAdminDoc = await getDoc(doc(db, 'allowed_admins', email.toLowerCase()));
+      isAllowedAdmin = allowedAdminDoc.exists();
+    }
+
     await setDoc(doc(db, 'users', result.user.uid), {
       uid: result.user.uid,
-      email: result.user.email,
-      displayName: username,
-      role: (result.user.email === 'darkfn1234567890@gmail.com' || result.user.email === 'whitecaleb888@gmail.com') ? 'admin' : 'user',
+      email: result.user.email || null,
+      displayName: username || null,
+      photoURL: result.user.photoURL || null,
+      role: (result.user.email === 'darkfn1234567890@gmail.com' || result.user.email === 'whitecaleb888@gmail.com' || isAllowedAdmin) ? 'admin' : 'user',
       createdAt: serverTimestamp()
     });
     

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Trash2, Edit2, Save, AlertCircle, CheckCircle2, ShieldCheck, Users, Megaphone, Activity, Send, Check } from 'lucide-react';
 import { db, auth, OperationType, handleFirestoreError } from '../firebase';
-import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, serverTimestamp, Timestamp, setDoc } from 'firebase/firestore';
 
 interface Announcement {
   id: string;
@@ -22,6 +22,13 @@ interface Suggestion {
   status: 'pending' | 'reviewed';
 }
 
+interface AllowedAdmin {
+  id: string;
+  email: string;
+  addedBy: string;
+  createdAt: Timestamp;
+}
+
 interface AdminDashboardProps {
   onClose: () => void;
 }
@@ -29,12 +36,15 @@ interface AdminDashboardProps {
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [allowedAdmins, setAllowedAdmins] = useState<AllowedAdmin[]>([]);
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
+  const [newAdminEmail, setNewAdminEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'announcements' | 'suggestions' | 'stats' | 'users'>('announcements');
+  const [activeTab, setActiveTab] = useState<'announcements' | 'suggestions' | 'stats' | 'users' | 'admins'>('announcements');
+  const [isAppOwner, setIsAppOwner] = useState(false);
 
   useEffect(() => {
     const q = query(collection(db, 'site_announcements'), orderBy('createdAt', 'desc'));
@@ -59,9 +69,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
       handleFirestoreError(err, OperationType.LIST, 'suggestions');
     });
 
+    const checkOwner = () => {
+      if (auth.currentUser?.email === 'darkfn1234567890@gmail.com' || auth.currentUser?.email === 'whitecaleb888@gmail.com') {
+        setIsAppOwner(true);
+      }
+    };
+    checkOwner();
+
+    const qAdmins = query(collection(db, 'allowed_admins'), orderBy('createdAt', 'desc'));
+    const unsubscribeAdmins = onSnapshot(qAdmins, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as AllowedAdmin[];
+      setAllowedAdmins(data);
+    }, (err) => {
+      handleFirestoreError(err, OperationType.LIST, 'allowed_admins');
+    });
+
     return () => {
       unsubscribe();
       unsubscribeSuggestions();
+      unsubscribeAdmins();
     };
   }, []);
 
@@ -129,6 +158,41 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
     }
   };
 
+  const handleAddAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAdminEmail.trim() || !isAppOwner) return;
+
+    setIsSubmitting(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const email = newAdminEmail.trim().toLowerCase();
+      await setDoc(doc(db, 'allowed_admins', email), {
+        email: email,
+        addedBy: auth.currentUser?.uid,
+        createdAt: serverTimestamp()
+      });
+      setNewAdminEmail('');
+      setSuccess('Admin email added successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError('Failed to add admin email. Check console for details.');
+      handleFirestoreError(err, OperationType.CREATE, 'allowed_admins');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteAdmin = async (id: string) => {
+    if (!isAppOwner) return;
+    try {
+      await deleteDoc(doc(db, 'allowed_admins', id));
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `allowed_admins/${id}`);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#0a0a0a] text-white">
       {/* Header */}
@@ -156,7 +220,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
           { id: 'announcements', icon: Megaphone, label: 'Announcements' },
           { id: 'suggestions', icon: Send, label: 'Suggestions' },
           { id: 'stats', icon: Activity, label: 'Site Stats' },
-          { id: 'users', icon: Users, label: 'User Management' }
+          { id: 'users', icon: Users, label: 'User Management' },
+          ...(isAppOwner ? [{ id: 'admins', icon: ShieldCheck, label: 'Manage Admins' }] : [])
         ].map((tab) => (
           <button
             key={tab.id}
@@ -334,6 +399,82 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
             <div>
               <h3 className="text-lg font-bold">User Management Coming Soon</h3>
               <p className="text-xs text-neutral-500 max-w-xs mx-auto">Manage user roles, permissions, and account status from this panel.</p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'admins' && isAppOwner && (
+          <div className="space-y-6">
+            <form onSubmit={handleAddAdmin} className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+              <h3 className="text-sm font-black uppercase tracking-widest text-accent">Add New Admin</h3>
+              
+              {error && (
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-2 text-red-500 text-sm">
+                  <AlertCircle size={16} />
+                  {error}
+                </div>
+              )}
+              
+              {success && (
+                <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center gap-2 text-green-500 text-sm">
+                  <CheckCircle2 size={16} />
+                  {success}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Email Address</label>
+                <input
+                  type="email"
+                  value={newAdminEmail}
+                  onChange={(e) => setNewAdminEmail(e.target.value)}
+                  placeholder="admin@example.com"
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent/50 transition-colors"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting || !newAdminEmail.trim()}
+                className="w-full py-3 rounded-xl bg-accent text-black font-black uppercase tracking-widest text-sm hover:bg-accent/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Plus size={18} />
+                    Add Admin
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-black uppercase tracking-widest text-neutral-500">Allowed Admins</h3>
+              {allowedAdmins.length === 0 ? (
+                <div className="text-center py-12 text-neutral-500 text-sm italic">
+                  No additional admins added yet.
+                </div>
+              ) : (
+                allowedAdmins.map((admin) => (
+                  <div key={admin.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between group hover:bg-white/10 transition-colors">
+                    <div>
+                      <h4 className="font-bold text-white">{admin.email}</h4>
+                      <p className="text-xs text-neutral-500 mt-1">
+                        Added: {admin.createdAt?.toDate().toLocaleDateString()}
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => handleDeleteAdmin(admin.id)}
+                      className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                      title="Remove Admin"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}

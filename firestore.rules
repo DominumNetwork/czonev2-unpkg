@@ -53,12 +53,15 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    function isAdmin() {
+    function isAppOwner() {
       return isAuthenticated() && (
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
         (request.auth.token.email == "darkfn1234567890@gmail.com" && request.auth.token.email_verified == true) ||
         (request.auth.token.email == "whitecaleb888@gmail.com" && request.auth.token.email_verified == true)
       );
+    }
+
+    function isAdmin() {
+      return isAppOwner() || (isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
 
     function isValidEmail(email) {
@@ -105,14 +108,32 @@ service cloud.firestore {
              data.status in ['pending', 'reviewed'];
     }
 
+    function isValidAllowedAdmin(data) {
+      return data.keys().hasAll(['email', 'addedBy', 'createdAt']) &&
+             data.keys().hasOnly(['email', 'addedBy', 'createdAt']) &&
+             isValidEmail(data.email) &&
+             data.addedBy == request.auth.uid;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
 
+    function isAllowedAdmin() {
+      return request.auth.token.email != null && exists(/databases/$(database)/documents/allowed_admins/$(request.auth.token.email.lower()));
+    }
+
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == 'user' || isAdmin());
-      allow update: if isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == resource.data.role || isAdmin());
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == 'user' || isAppOwner() || isAllowedAdmin());
+      allow update: if (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role) ||
+                    (isAppOwner() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']) && request.resource.data.role in ['admin', 'user']);
+    }
+
+    match /allowed_admins/{docId} {
+      allow read: if true;
+      allow create, update: if isAppOwner() && isValidAllowedAdmin(request.resource.data);
+      allow delete: if isAppOwner();
     }
 
     match /site_announcements/{announcementId} {
