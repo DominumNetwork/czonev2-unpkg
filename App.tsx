@@ -13,9 +13,10 @@ import { MOVIES_DATA, ANIME_DATA, MANGA_DATA, TV_DATA, STAFF_DATA, PARTNERS_DATA
 import { GAME_PAYLOADS } from './gamePayloads';
 import { getEmulatorHtml } from './services/emulatorService';
 import { useLanguage } from './context/LanguageContext';
-import { auth, signInWithGoogle, logout } from './firebase';
+import { auth, logout } from './firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import AdminDashboard from './components/AdminDashboard';
+import AuthModal from './components/AuthModal';
 import { Search, X, Film, Sparkles, BookOpen, Tv, SearchX, PlayCircle, Star, Globe, Users, ExternalLink, ShieldAlert, Zap, MessageSquare, Activity, Loader2, Book, AlertTriangle, Settings as SettingsIcon, GitCommit, ChevronDown, LayoutGrid, Gamepad2, ShieldCheck, LogOut, LogIn } from 'lucide-react';
 
 const DEFAULT_LOGO = "https://lh7-rt.googleusercontent.com/sitesz/AClOY7psM7n5cC2oRAQVLVss3LsgYFKWwE-KzTjGQvDYtnnp1f1j-Szl1OH6r1pZTXpsw0t_1es0N4P9E2cBl4Oqs-lOwNJdAt3H5CiGxGZKfBTzaYq_ybiI1qd2dWXWu_GRWMqLDD_3BL9tkNhJBNJhjBuuQWyvP1B19h6v0fblyHBwfxs-94c7?key=IannGxLsV9P5UfJ0NHPqqQ";
@@ -135,8 +136,9 @@ const App: React.FC = () => {
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isUpdateLogOpen, setIsUpdateLogOpen] = useState(true);
+  const [isUpdateLogOpen, setIsUpdateLogOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const { t } = useLanguage();
@@ -166,6 +168,10 @@ const App: React.FC = () => {
           setSelectedItem(null);
         } else if (selectedGame) {
           setSelectedGame(null);
+        } else if (isAuthModalOpen) {
+          setIsAuthModalOpen(false);
+        } else if (isAdminOpen) {
+          setIsAdminOpen(false);
         }
       }
     };
@@ -293,88 +299,6 @@ const App: React.FC = () => {
           <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] rounded-full opacity-30" style={{ background: 'rgba(37,99,235,0.05)', filter: 'blur(130px)', transform: 'translateZ(0)' }}></div>
         </div>
 
-        <AnimatePresence>
-          {isAdminOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 md:p-8"
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="relative w-full max-w-5xl h-[80vh] bg-[#0f0f0f] rounded-3xl overflow-hidden border border-white/10 shadow-2xl"
-              >
-                <AdminDashboard onClose={() => setIsAdminOpen(false)} />
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {selectedGame && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 md:p-8"
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="relative w-full max-w-6xl aspect-video bg-[#0f0f0f] rounded-3xl overflow-hidden border border-white/10 shadow-2xl flex flex-col"
-              >
-                <div className="flex items-center justify-between p-4 border-b border-white/5 bg-black/40 backdrop-blur-md">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-2 rounded-xl bg-gradient-to-br ${selectedGame.color} shadow-lg`}>
-                      <Gamepad2 className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white leading-tight">{selectedGame.title}</h3>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-neutral-500">{selectedGame.system} • {selectedGame.year}</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => setSelectedGame(null)}
-                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-all border border-white/5"
-                  >
-                    <X size={24} />
-                  </button>
-                </div>
-                
-                <div className="flex-1 bg-black relative">
-                  {GAME_PAYLOADS[selectedGame.id] ? (
-                    <iframe 
-                      srcDoc={GAME_PAYLOADS[selectedGame.id].customHtml}
-                      className="w-full h-full border-none"
-                      title={selectedGame.title}
-                      allow="autoplay; fullscreen; keyboard"
-                    />
-                  ) : selectedGame.link ? (
-                    <iframe 
-                      srcDoc={getEmulatorHtml(selectedGame)}
-                      className="w-full h-full border-none"
-                      title={selectedGame.title}
-                      allow="autoplay; fullscreen; keyboard"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
-                      <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
-                        <ShieldAlert className="w-10 h-10 text-yellow-500" />
-                      </div>
-                      <h3 className="text-2xl font-bold text-white mb-2">Payload Not Found</h3>
-                      <p className="text-neutral-500 max-w-md italic">"The digital signature for this title is missing from our archives. Please check back later."</p>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        
         <div className="relative z-20 flex items-center justify-between p-4 bg-bg/80 backdrop-blur-md border-b border-white/5">
             <button 
                 onClick={() => setIsSidebarVisible(!isSidebarVisible)}
@@ -385,7 +309,7 @@ const App: React.FC = () => {
             <div className="text-xs text-text-secondary">© 2026 ChillZone</div>
         </div>
 
-        {isSidebarVisible && !selectedGame && (
+        {isSidebarVisible && !selectedGame && !isAuthModalOpen && !isAdminOpen && (
             <Sidebar 
             activeCategory={activeCategory} 
             onSelect={(cat) => { setActiveCategory(cat); setSearchQuery(''); setIsSettingsOpen(false); }} 
@@ -449,9 +373,9 @@ const App: React.FC = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={user ? logout : signInWithGoogle}
+                onClick={user ? logout : () => setIsAuthModalOpen(true)}
                 className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover border border-white/5 text-text-secondary hover:text-white hover:border-white/20 transition-all duration-300"
-                title={user ? "Logout" : "Login with Google"}
+                title={user ? "Logout" : "Login / Sign Up"}
               >
                 {user ? <LogOut size={18} /> : <LogIn size={18} />}
               </motion.button>
@@ -875,6 +799,115 @@ const App: React.FC = () => {
               </>
             )}
           </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modals & Overlays */}
+      <AnimatePresence>
+        {isAuthModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsAuthModalOpen(false)}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 md:p-8"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-md bg-[#0a0a0a] rounded-3xl overflow-hidden border border-white/10 shadow-2xl"
+            >
+              <AuthModal onClose={() => setIsAuthModalOpen(false)} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isAdminOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsAdminOpen(false)}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 md:p-8"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-5xl h-[80vh] bg-[#0f0f0f] rounded-3xl overflow-hidden border border-white/10 shadow-2xl"
+            >
+              <AdminDashboard onClose={() => setIsAdminOpen(false)} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {selectedGame && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedGame(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 md:p-8"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-6xl aspect-video bg-[#0f0f0f] rounded-3xl overflow-hidden border border-white/10 shadow-2xl flex flex-col"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-white/5 bg-black/40 backdrop-blur-md">
+                <div className="flex items-center gap-4">
+                  <div className={`p-2 rounded-xl bg-gradient-to-br ${selectedGame.color} shadow-lg`}>
+                    <Gamepad2 className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white leading-tight">{selectedGame.title}</h3>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-neutral-500">{selectedGame.system} • {selectedGame.year}</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setSelectedGame(null)}
+                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-all border border-white/5"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="flex-1 bg-black relative">
+                {GAME_PAYLOADS[selectedGame.id] ? (
+                  <iframe 
+                    srcDoc={GAME_PAYLOADS[selectedGame.id].customHtml}
+                    className="w-full h-full border-none"
+                    title={selectedGame.title}
+                    allow="autoplay; fullscreen; keyboard"
+                  />
+                ) : selectedGame.link ? (
+                  <iframe 
+                    srcDoc={getEmulatorHtml(selectedGame)}
+                    className="w-full h-full border-none"
+                    title={selectedGame.title}
+                    allow="autoplay; fullscreen; keyboard"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+                    <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
+                      <ShieldAlert className="w-10 h-10 text-yellow-500" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-2">Payload Not Found</h3>
+                    <p className="text-neutral-500 max-w-md italic">"The digital signature for this title is missing from our archives. Please check back later."</p>
+                  </div>
+                )}
+              </div>
             </motion.div>
           </motion.div>
         )}

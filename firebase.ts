@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot, query, orderBy, limit, getDocFromServer, FirestoreError } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot, query, orderBy, limit, getDocFromServer, FirestoreError, serverTimestamp } from 'firebase/firestore';
 import firebaseConfig from './firebase-applet-config.json';
 
 // Initialize Firebase SDK
@@ -12,9 +12,53 @@ export const googleProvider = new GoogleAuthProvider();
 export const signInWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
+    // Create user doc if it doesn't exist
+    const userDoc = doc(db, 'users', result.user.uid);
+    const docSnap = await getDoc(userDoc);
+    if (!docSnap.exists()) {
+      await setDoc(userDoc, {
+        uid: result.user.uid,
+        email: result.user.email,
+        displayName: result.user.displayName,
+        photoURL: result.user.photoURL,
+        role: result.user.email === 'darkfn1234567890@gmail.com' ? 'admin' : 'user',
+        createdAt: serverTimestamp()
+      });
+    }
     return result.user;
   } catch (error) {
     console.error("Error signing in with Google:", error);
+    throw error;
+  }
+};
+
+export const signUpWithEmail = async (email: string, pass: string, username: string) => {
+  try {
+    const result = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(result.user, { displayName: username });
+    
+    // Create user doc
+    await setDoc(doc(db, 'users', result.user.uid), {
+      uid: result.user.uid,
+      email: result.user.email,
+      displayName: username,
+      role: result.user.email === 'darkfn1234567890@gmail.com' ? 'admin' : 'user',
+      createdAt: serverTimestamp()
+    });
+    
+    return result.user;
+  } catch (error) {
+    console.error("Error signing up with email:", error);
+    throw error;
+  }
+};
+
+export const loginWithEmail = async (email: string, pass: string) => {
+  try {
+    const result = await signInWithEmailAndPassword(auth, email, pass);
+    return result.user;
+  } catch (error) {
+    console.error("Error logging in with email:", error);
     throw error;
   }
 };
