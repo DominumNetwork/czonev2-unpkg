@@ -36,7 +36,12 @@ const Partners: React.FC = () => {
       <div className="flex-1 p-10 overflow-y-auto">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-6 mb-8">
-            <img src={selectedPartner.avatar} alt={selectedPartner.name} className="w-24 h-24 rounded-2xl border border-white/10" />
+            <img 
+              src={selectedPartner.avatar || 'https://picsum.photos/seed/avatar/200/200'} 
+              alt={selectedPartner.name} 
+              className="w-24 h-24 rounded-2xl border border-white/10" 
+              referrerPolicy="no-referrer"
+            />
             <div>
               <h1 className="text-5xl font-black italic uppercase tracking-tighter">{selectedPartner.name}</h1>
               <div className="flex items-center gap-2 text-accent text-sm font-bold uppercase tracking-widest">

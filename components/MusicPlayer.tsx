@@ -46,71 +46,17 @@ const MusicPlayer: React.FC = () => {
 
     setIsLoading(true);
     try {
-      // Try monochrome proxy first
-      let response = await fetch(`/api/music/monochrome/search?s=${encodeURIComponent(searchQuery)}`);
+      const response = await fetch(`/api/music/monochrome/search?s=${encodeURIComponent(searchQuery)}`);
+      const contentType = response.headers.get('content-type');
       
-      if (!response.ok) {
-        console.warn('Monochrome search failed, trying Saavn...');
-        // Fallback to Saavn proxy
-        response = await fetch(`/api/music/search?q=${encodeURIComponent(searchQuery)}`);
+      if (response.ok && contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        handleSearchResults(data);
+      } else {
+        const text = await response.text();
+        console.error(`Monochrome search failed with status ${response.status}. Content-Type: ${contentType}. Body snippet: ${text.substring(0, 100)}`);
+        throw new Error(`Music search failed with status ${response.status}`);
       }
-      
-      if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      let formattedTracks: Track[] = [];
-
-      // Handle Monochrome response
-      if (data.data && data.data.items) {
-        formattedTracks = data.data.items.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          artist: item.artist.name,
-          album: item.album.title,
-          cover: `https://resources.tidal.com/images/${item.album.cover.replace(/-/g, '/')}/640x640.jpg`,
-          streamUrl: undefined,
-          source: 'monochrome'
-        }));
-      } 
-      // Handle Saavn response (jiosaavn-api.vercel.app or saavn.dev)
-      else if (data.data && data.data.results) {
-        formattedTracks = data.data.results.map((item: any) => ({
-          id: item.id,
-          title: item.name || item.title,
-          artist: item.artists?.primary?.[0]?.name || item.artist || item.subtitle || 'Unknown Artist',
-          album: item.album?.name || item.album || 'Unknown Album',
-          cover: item.image?.[2]?.link || item.image?.[2]?.url || item.image?.[0]?.link || item.image || '',
-          streamUrl: item.downloadUrl?.[4]?.link || item.downloadUrl?.[4]?.url || item.downloadUrl || undefined,
-          source: 'saavn'
-        }));
-      } else if (Array.isArray(data)) {
-         // Some Saavn APIs return array directly
-         formattedTracks = data.map((item: any) => ({
-          id: item.id,
-          title: item.song || item.name || item.title,
-          artist: item.singers || item.artist || item.subtitle || 'Unknown Artist',
-          album: item.album || 'Unknown Album',
-          cover: item.image,
-          streamUrl: item.media_url || item.downloadUrl || undefined,
-          source: 'saavn'
-        }));
-      } else if (data.results) {
-        // Handle direct results array
-        formattedTracks = data.results.map((item: any) => ({
-          id: item.id,
-          title: item.name || item.title,
-          artist: item.artists?.primary?.[0]?.name || item.artist || item.subtitle || 'Unknown Artist',
-          album: item.album?.name || item.album || 'Unknown Album',
-          cover: item.image?.[2]?.link || item.image?.[2]?.url || item.image?.[0]?.link || item.image || '',
-          streamUrl: item.downloadUrl?.[4]?.link || item.downloadUrl?.[4]?.url || item.downloadUrl || undefined,
-          source: 'saavn'
-        }));
-      }
-
-      setTracks(formattedTracks);
     } catch (error) {
       console.error('Error searching music:', error);
     } finally {
@@ -118,36 +64,76 @@ const MusicPlayer: React.FC = () => {
     }
   };
 
+  const handleSearchResults = (data: any) => {
+    let formattedTracks: Track[] = [];
+
+    // Handle Monochrome response
+    if (data.data && data.data.items) {
+      formattedTracks = data.data.items.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        artist: item.artist.name,
+        album: item.album.title,
+        cover: `https://resources.tidal.com/images/${item.album.cover.replace(/-/g, '/')}/640x640.jpg`,
+        streamUrl: undefined,
+        source: 'monochrome'
+      }));
+    } 
+    // Handle Saavn fallback response
+    else if (data.data && data.data.results) {
+      formattedTracks = data.data.results.map((item: any) => ({
+        id: item.id,
+        title: item.name || item.title,
+        artist: item.artists?.primary?.[0]?.name || item.artist || item.subtitle || 'Unknown Artist',
+        album: item.album?.name || item.album || 'Unknown Album',
+        cover: item.image?.[2]?.link || item.image?.[2]?.url || item.image?.[0]?.link || (typeof item.image === 'string' ? item.image : ''),
+        streamUrl: item.downloadUrl?.[4]?.link || item.downloadUrl?.[4]?.url || (typeof item.downloadUrl === 'string' ? item.downloadUrl : undefined),
+        source: 'saavn'
+      }));
+    } else if (data.results) {
+      formattedTracks = data.results.map((item: any) => ({
+        id: item.id,
+        title: item.name || item.title,
+        artist: item.artists?.primary?.[0]?.name || item.artist || item.subtitle || 'Unknown Artist',
+        album: item.album?.name || item.album || 'Unknown Album',
+        cover: item.image?.[2]?.link || item.image?.[2]?.url || item.image?.[0]?.link || (typeof item.image === 'string' ? item.image : ''),
+        streamUrl: item.downloadUrl?.[4]?.link || item.downloadUrl?.[4]?.url || (typeof item.downloadUrl === 'string' ? item.downloadUrl : undefined),
+        source: 'saavn'
+      }));
+    } else if (Array.isArray(data)) {
+      formattedTracks = data.map((item: any) => ({
+        id: item.id,
+        title: item.song || item.name || item.title,
+        artist: item.singers || item.artist || item.subtitle || 'Unknown Artist',
+        album: item.album || 'Unknown Album',
+        cover: typeof item.image === 'string' ? item.image : (Array.isArray(item.image) ? (item.image[2]?.link || item.image[2]?.url || item.image[0]?.link || '') : ''),
+        streamUrl: typeof item.media_url === 'string' ? item.media_url : (typeof item.downloadUrl === 'string' ? item.downloadUrl : undefined),
+        source: 'saavn'
+      }));
+    }
+
+    setTracks(formattedTracks);
+  };
+
   const fetchStreamUrl = async (trackId: string | number, source: string = 'monochrome') => {
     try {
-      if (source === 'saavn') {
-        // For Saavn, we might already have the URL or we need to fetch it from our proxy
-        const response = await fetch(`/api/music/songs/${trackId}`);
-        if (response.ok) {
-          const data = await response.json();
-          const song = data.data?.[0] || data[0] || data;
-          
-          if (!song) return null;
-
-          // Try different possible locations for the download URL
-          if (Array.isArray(song.downloadUrl)) {
-            // Try to get the highest quality (usually the last one)
-            const highestQuality = song.downloadUrl[song.downloadUrl.length - 1];
-            return highestQuality?.link || highestQuality?.url || null;
-          }
-          
-          return song.downloadUrl || song.media_url || null;
-        }
-        return null;
-      }
-
-      // Monochrome logic
       const response = await fetch(`/api/music/monochrome/track/${trackId}?quality=HIGH`);
       if (!response.ok) {
         throw new Error(`Failed to fetch track info: ${response.status}`);
       }
       const data = await response.json();
       
+      // Check if it's a Saavn response from the fallback
+      if (source === 'saavn' || (data.data && data.data[0] && data.data[0].downloadUrl)) {
+        const song = data.data?.[0] || data[0] || data;
+        if (Array.isArray(song.downloadUrl)) {
+          const highestQuality = song.downloadUrl[song.downloadUrl.length - 1];
+          return highestQuality?.link || highestQuality?.url || null;
+        }
+        return song.downloadUrl || song.media_url || null;
+      }
+
+      // Monochrome logic
       if (!data || !data.data || !data.data.manifest) {
         console.error('Invalid track data received:', data);
         return null;
@@ -175,7 +161,7 @@ const MusicPlayer: React.FC = () => {
     const track = tracks[index];
     if (!track.streamUrl) {
       setIsLoading(true);
-      const url = await fetchStreamUrl(track.id, (track as any).source);
+      const url = await fetchStreamUrl(track.id, track.source);
       if (url) {
         const newTracks = [...tracks];
         newTracks[index] = { ...track, streamUrl: url };
@@ -284,9 +270,10 @@ const MusicPlayer: React.FC = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.5 }}
-                  src={currentTrack.cover} 
+                  src={currentTrack.cover || 'https://picsum.photos/seed/music/200/200'} 
                   alt={currentTrack.title} 
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  referrerPolicy="no-referrer"
                 />
               ) : (
                 <motion.div 
@@ -439,7 +426,12 @@ const MusicPlayer: React.FC = () => {
                         className={`w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors group ${currentTrackIndex === index ? 'bg-white/5' : ''}`}
                       >
                         <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 relative">
-                          <img src={track.cover} alt={track.title} className="w-full h-full object-cover" />
+                          <img 
+                            src={track.cover || 'https://picsum.photos/seed/music/200/200'} 
+                            alt={track.title} 
+                            className="w-full h-full object-cover" 
+                            referrerPolicy="no-referrer"
+                          />
                           {currentTrackIndex === index && isPlaying && (
                             <div className="absolute inset-0 bg-bg/40 flex items-center justify-center">
                               <div className="flex gap-0.5 items-end h-4">

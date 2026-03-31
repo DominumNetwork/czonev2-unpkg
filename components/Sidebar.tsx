@@ -66,9 +66,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, on
         >
           <div className="w-12 h-12 shrink-0 overflow-hidden relative z-10 shadow-[0_0_20px_rgba(255,255,255,0.05)] rounded-xl">
             <img 
-              src={logoUrl} 
+              src={logoUrl || 'https://picsum.photos/seed/logo/200/200'} 
               alt="Logo" 
               className="w-full h-full object-contain"
+              referrerPolicy="no-referrer"
             />
           </div>
           <input 

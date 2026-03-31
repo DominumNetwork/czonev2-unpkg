@@ -49,95 +49,91 @@ app.get('/api/analytics/data', async (req, res) => {
 });
 
 // Music Proxy Routes
-app.get('/api/music/search', async (req, res) => {
-  try {
-    const query = req.query.q as string;
-    if (!query) return res.status(400).json({ error: 'Query required' });
-    
-    // Try saavn.dev API first as it's more reliable
-    try {
-      const response = await fetch(`https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}`);
-      if (response.ok) {
-        const data = await response.json();
-        return res.json(data);
-      }
-    } catch (e) {
-      console.error('saavn.dev API failed, trying backup...');
-    }
-
-    // Try primary API (jiosaavn-api.vercel.app)
-    try {
-      const response = await fetch(`https://jiosaavn-api.vercel.app/search?query=${encodeURIComponent(query)}`);
-      if (response.ok) {
-        const data = await response.json();
-        return res.json(data);
-      }
-    } catch (e) {
-      console.error('jiosaavn-api.vercel.app API failed');
-    }
-
-    res.status(500).json({ error: 'All APIs failed' });
-  } catch (error) {
-    console.error('Proxy error:', error);
-    res.status(500).json({ error: 'Failed to fetch music' });
-  }
-});
-
-app.get('/api/music/songs/:id', async (req, res) => {
-  try {
-    const id = req.params.id;
-    if (!id) return res.status(400).json({ error: 'ID required' });
-
-    // Try saavn.dev API first
-    try {
-      const response = await fetch(`https://saavn.dev/api/songs/${id}`);
-      if (response.ok) {
-        const data = await response.json();
-        return res.json(data);
-      }
-    } catch (e) {
-      console.error('saavn.dev API failed, trying backup...');
-    }
-
-    // Try primary API (jiosaavn-api.vercel.app)
-    try {
-      const response = await fetch(`https://jiosaavn-api.vercel.app/song?id=${id}`);
-      if (response.ok) {
-        const data = await response.json();
-        return res.json(data);
-      }
-    } catch (e) {
-      console.error('jiosaavn-api.vercel.app API failed');
-    }
-
-    res.status(500).json({ error: 'All APIs failed' });
-  } catch (error) {
-    console.error('Proxy error:', error);
-    res.status(500).json({ error: 'Failed to fetch song details' });
-  }
-});
+const MONOCHROME_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+  'Referer': 'https://monochrome.tf/',
+  'Origin': 'https://monochrome.tf',
+  'Accept': 'application/json, text/plain, */*',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'Cache-Control': 'no-cache',
+  'Pragma': 'no-cache'
+};
 
 app.get('/api/music/monochrome/search', async (req, res) => {
   try {
     const query = req.query.s as string;
     if (!query) return res.status(400).json({ error: 'Query required' });
     
-    const response = await fetch(`https://api.monochrome.tf/search?s=${encodeURIComponent(query)}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-        'Referer': 'https://monochrome.tf/'
+    console.log(`Monochrome search for: ${query}`);
+
+    const monochromeMirrors = [
+      `https://api.monochrome.tf/search?s=${encodeURIComponent(query)}`,
+      `https://monochrome.tf/api/search?s=${encodeURIComponent(query)}`
+    ];
+
+    let lastError = null;
+
+    for (const url of monochromeMirrors) {
+      let retries = 2;
+      while (retries > 0) {
+        try {
+          console.log(`Trying Monochrome mirror (Retries left: ${retries}): ${url}`);
+          const response = await axios.get(url, { 
+            headers: MONOCHROME_HEADERS,
+            timeout: 8000,
+            validateStatus: (status) => status < 500
+          });
+
+          const contentType = response.headers['content-type'] || '';
+          if (response.status === 200 && contentType.includes('application/json')) {
+            console.log('Monochrome search success');
+            return res.json(response.data);
+          }
+          
+          console.warn(`Monochrome mirror ${url} returned status ${response.status} with content-type ${contentType}`);
+          break; // Don't retry if it's not a 5xx error
+        } catch (e: any) {
+          lastError = e;
+          console.error(`Monochrome mirror attempt failed: ${url}. Error: ${e.message}`);
+          retries--;
+          if (retries > 0) await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+        }
       }
-    });
-    
-    if (!response.ok) {
-      return res.status(response.status).json({ error: `Monochrome search failed: ${response.status}` });
     }
-    
-    const data = await response.json();
-    res.json(data);
+
+    // SILENT FALLBACK TO SAAVN IF MONOCHROME FAILS
+    console.warn('All Monochrome mirrors failed, falling back to Saavn mirrors...');
+    const saavnMirrors = [
+      `https://jiosaavn-api.vercel.app/search?query=${encodeURIComponent(query)}`,
+      `https://jiosaavn-api-v3.vercel.app/search?query=${encodeURIComponent(query)}`,
+      `https://jiosaavn-api-beta.vercel.app/search?query=${encodeURIComponent(query)}`,
+      `https://saavn.me/api/search/songs?query=${encodeURIComponent(query)}`,
+      `https://music-api-v2.vercel.app/search?query=${encodeURIComponent(query)}`
+    ];
+
+    for (const url of saavnMirrors) {
+      try {
+        console.log(`Trying Saavn fallback mirror: ${url}`);
+        const response = await axios.get(url, { timeout: 5000 });
+        if (response.data) {
+          console.log(`Success with Saavn fallback: ${url}`);
+          // Transform Saavn response to a format the client can understand if needed, 
+          // but the client already has logic for both. 
+          // Actually, let's just return it and let the client handle it.
+          return res.json(response.data);
+        }
+      } catch (e: any) {
+        console.error(`Saavn fallback failed: ${url}. Error: ${e.message}`);
+      }
+    }
+
+    res.status(503).json({ 
+      error: 'All music search APIs failed', 
+      details: lastError?.message || 'Service Unavailable' 
+    });
   } catch (error) {
-    console.error('Monochrome search proxy error:', error);
-    res.status(500).json({ error: 'Failed to fetch monochrome search' });
+    console.error('Music search proxy error:', error);
+    res.status(500).json({ error: 'Failed to fetch music' });
   }
 });
 
@@ -146,22 +142,58 @@ app.get('/api/music/monochrome/track/:id', async (req, res) => {
     const id = req.params.id;
     const quality = req.query.quality || 'HIGH';
     
-    const response = await fetch(`https://api.monochrome.tf/track?id=${id}&quality=${quality}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-        'Referer': 'https://monochrome.tf/'
+    const monochromeTrackMirrors = [
+      `https://api.monochrome.tf/track?id=${id}&quality=${quality}`,
+      `https://monochrome.tf/api/track?id=${id}&quality=${quality}`
+    ];
+
+    for (const url of monochromeTrackMirrors) {
+      let retries = 2;
+      while (retries > 0) {
+        try {
+          console.log(`Trying Monochrome track mirror (Retries left: ${retries}): ${url}`);
+          const response = await axios.get(url, { 
+            headers: MONOCHROME_HEADERS,
+            timeout: 8000,
+            validateStatus: (status) => status < 500
+          });
+          
+          const contentType = response.headers['content-type'] || '';
+          if (response.status === 200 && contentType.includes('application/json')) {
+            return res.json(response.data);
+          }
+          
+          console.warn(`Monochrome track mirror ${url} returned status ${response.status} with content-type ${contentType}`);
+          break;
+        } catch (e: any) {
+          console.error(`Monochrome track mirror attempt failed: ${url}. Error: ${e.message}`);
+          retries--;
+          if (retries > 0) await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
-    });
-    
-    if (!response.ok) {
-      return res.status(response.status).json({ error: `Monochrome track failed: ${response.status}` });
     }
-    
-    const data = await response.json();
-    res.json(data);
+
+    // If it's a Saavn ID (numeric or alphanumeric from Saavn), we might need a different endpoint
+    // but the client usually knows which one to call. 
+    // For now, let's try a Saavn fallback for track details too.
+    const saavnTrackMirrors = [
+      `https://jiosaavn-api.vercel.app/song?id=${id}`,
+      `https://saavn.me/api/songs/${id}`
+    ];
+
+    for (const url of saavnTrackMirrors) {
+      try {
+        const response = await axios.get(url, { timeout: 5000 });
+        if (response.data) return res.json(response.data);
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    res.status(503).json({ error: 'Failed to fetch track details from all sources' });
   } catch (error) {
-    console.error('Monochrome track proxy error:', error);
-    res.status(500).json({ error: 'Failed to fetch monochrome track' });
+    console.error('Track proxy error:', error);
+    res.status(500).json({ error: 'Failed to fetch track details' });
   }
 });
 

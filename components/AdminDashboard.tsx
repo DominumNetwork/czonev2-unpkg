@@ -175,10 +175,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin }
     }
   };
 
-  const handleUpdateUserRole = async (uid: string, currentRole: 'admin' | 'user') => {
+  const handleUpdateUserRole = async (uid: string, newRole: 'admin' | 'user' | 'donator') => {
     try {
       await updateDoc(doc(db, 'users', uid), {
-        role: currentRole === 'admin' ? 'user' : 'admin'
+        role: newRole
       });
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `users/${uid}`);
@@ -477,17 +477,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin }
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded ${
-                      user.role === 'admin' ? 'bg-accent/20 text-accent' : 'bg-neutral-800 text-neutral-400'
-                    }`}>
-                      {user.role}
-                    </span>
-                    <button 
-                      onClick={() => handleUpdateUserRole(user.uid, user.role)}
-                      className="text-xs text-neutral-500 hover:text-white transition-colors"
+                    <select 
+                      value={user.role}
+                      onChange={(e) => handleUpdateUserRole(user.uid, e.target.value as any)}
+                      className="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white focus:outline-none focus:border-accent/50 transition-all cursor-pointer"
                     >
-                      Toggle Role
-                    </button>
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                      <option value="donator">Donator</option>
+                    </select>
                   </div>
                 </div>
               ))

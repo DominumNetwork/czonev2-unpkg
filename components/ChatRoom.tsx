@@ -1,18 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { db, auth } from '../firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { Send, Trash2, Edit2, Check, X } from 'lucide-react';
+import EmojiPicker, { Theme as EmojiTheme } from 'emoji-picker-react';
+import { Send, Trash2, Edit2, Check, X, ShieldCheck, Smile, DollarSign } from 'lucide-react';
 
 interface ChatRoomProps {
   collectionName?: string;
+  isAdmin?: boolean;
+  isSuperAdmin?: boolean;
 }
 
-const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat' }) => {
+const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat', isAdmin = false, isSuperAdmin = false }) => {
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const q = query(collection(db, collectionName), orderBy('createdAt', 'asc'));
@@ -35,6 +51,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat' }) => {
       createdAt: serverTimestamp(),
       uid: auth.currentUser.uid,
       displayName: auth.currentUser.displayName || 'Anonymous',
+      role: isSuperAdmin ? 'super-admin' : (isAdmin ? 'admin' : 'user'),
     });
     setNewMessage('');
   };
@@ -58,7 +75,23 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat' }) => {
     <div className="flex flex-col h-full bg-bg border border-white/5 rounded-2xl p-4">
       <div className="flex-1 overflow-y-auto space-y-4 mb-4 custom-scrollbar">
         {messages.map((msg) => (
-          <div key={msg.id} className={`flex ${msg.uid === auth.currentUser?.uid ? 'justify-end' : 'justify-start'}`}>
+          <div key={msg.id} className={`flex flex-col ${msg.uid === auth.currentUser?.uid ? 'items-end' : 'items-start'}`}>
+            {msg.role && (msg.role === 'admin' || msg.role === 'super-admin' || msg.role === 'donator') && (
+              <motion.div 
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`mb-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1 shadow-lg ${
+                  msg.role === 'super-admin' 
+                    ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black' 
+                    : msg.role === 'donator'
+                    ? 'bg-green-500 text-white'
+                    : 'bg-accent text-white'
+                }`}
+              >
+                {msg.role === 'donator' ? <DollarSign size={10} /> : <ShieldCheck size={10} />}
+                {msg.role === 'super-admin' ? 'Owner' : (msg.role === 'donator' ? 'Donator 💵' : 'Admin')}
+              </motion.div>
+            )}
             <div className={`max-w-[70%] p-3 rounded-2xl ${msg.uid === auth.currentUser?.uid ? 'bg-accent text-white' : 'bg-white/5 text-neutral-300'}`}>
               <div className="flex justify-between items-center mb-1">
                 <p className="text-xs font-bold opacity-70">{msg.displayName}</p>
@@ -90,14 +123,49 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat' }) => {
         ))}
         <div ref={messagesEndRef} />
       </div>
-      <form onSubmit={sendMessage} className="flex gap-2">
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Type a message..."
-          className="flex-1 bg-white/5 border border-white/5 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-accent"
-        />
+      <form onSubmit={sendMessage} className="flex gap-2 relative">
+        <div className="relative flex-1 flex gap-2">
+          <input
+            type="text"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Type a message..."
+            className="flex-1 bg-white/5 border border-white/5 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-accent"
+          />
+          <button 
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="p-2 bg-white/5 rounded-xl text-neutral-400 hover:text-white transition-colors border border-white/5"
+          >
+            <Smile size={18} />
+          </button>
+          
+          <AnimatePresence>
+            {showEmojiPicker && (
+              <motion.div 
+                ref={emojiPickerRef}
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="absolute bottom-full right-0 mb-2 z-50"
+              >
+                <EmojiPicker 
+                  onEmojiClick={(emojiData) => {
+                    setNewMessage(prev => prev + emojiData.emoji);
+                    // Keep picker open for multiple emojis if desired, or close it
+                    // setShowEmojiPicker(false);
+                  }}
+                  theme={EmojiTheme.DARK}
+                  lazyLoadEmojis={true}
+                  skinTonesDisabled={true}
+                  searchDisabled={false}
+                  width={300}
+                  height={400}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
         <button type="submit" className="p-2 bg-accent rounded-xl text-white hover:bg-accent/90 transition-colors">
           <Send size={18} />
         </button>

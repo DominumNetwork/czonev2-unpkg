@@ -680,7 +680,11 @@ const App: React.FC = () => {
                               >
                                 <div className="w-40 h-40 mx-auto mb-10 rounded-[40px] overflow-hidden border-2 border-surface-hover group-hover:border-accent/40 transition-all duration-700 shadow-inner relative bg-bg">
                                   {staff.img ? (
-                                    <img src={staff.img} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                                    <img 
+                                      src={staff.img || 'https://picsum.photos/seed/avatar/200/200'} 
+                                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
+                                      referrerPolicy="no-referrer"
+                                    />
                                   ) : (
                                     <div className="flex items-center justify-center h-full text-text-muted"><Users size={48} /></div>
                                   )}
@@ -782,10 +786,10 @@ const App: React.FC = () => {
                       />
                     )}
                     {activeCategory === 'chat' && (
-                      user ? <ChatRoom /> : <div className="text-center py-20 text-text-muted">Please sign up to access the chat room.</div>
+                      user ? <ChatRoom isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} /> : <div className="text-center py-20 text-text-muted">Please sign up to access the chat room.</div>
                     )}
                     {activeCategory === 'admin-chat' && (
-                      isAdmin ? <ChatRoom collectionName="admin_chat" /> : <div className="text-center py-20 text-text-muted">Authorized personnel only.</div>
+                      isAdmin ? <ChatRoom collectionName="admin_chat" isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} /> : <div className="text-center py-20 text-text-muted">Authorized personnel only.</div>
                     )}
                     {activeCategory === 'movies' && <LibrarySection title={t('Movies')} items={MOVIES_DATA} category="movie" searchQuery="" onOpenDetails={handleOpenDetails} showSearch={true} />}
                     {activeCategory === 'tv shows' && <LibrarySection title={t('TV Shows')} items={TV_DATA} category="tv" searchQuery="" onOpenDetails={handleOpenDetails} showSearch={true} />}
@@ -875,7 +879,11 @@ const App: React.FC = () => {
               )}
               {selectedItem.showPlayer ? null : (
                 <div className="w-full md:w-2/5 aspect-[2/3] md:h-auto relative overflow-hidden group/modal-img bg-bg shrink-0">
-                  <img src={selectedItem.item.img} className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover/modal-img:scale-110" />
+                  <img 
+                    src={selectedItem.item.img || 'https://picsum.photos/seed/poster/400/600'} 
+                    className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover/modal-img:scale-110" 
+                    referrerPolicy="no-referrer"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
                 </div>
               )}

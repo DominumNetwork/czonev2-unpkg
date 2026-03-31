@@ -83,7 +83,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, category, onOpenDetails }) =>
       )}
       
       <img 
-        src={currentImageUrl} 
+        src={currentImageUrl || 'https://picsum.photos/seed/poster/400/600'} 
         alt={item.t} 
         loading="lazy"
         referrerPolicy="no-referrer"
