@@ -40,6 +40,23 @@ const MusicPlayer: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentTrack = currentTrackIndex !== null ? tracks[currentTrackIndex] : null;
 
+  // Debugging src prop
+  useEffect(() => {
+    if (currentTrack?.cover !== undefined && typeof currentTrack?.cover !== 'string' && currentTrack?.cover !== null) {
+      console.warn('MusicPlayer: currentTrack.cover is not a string:', currentTrack.cover, 'for track:', currentTrack.title);
+    }
+  }, [currentTrack]);
+
+  useEffect(() => {
+    if (tracks.length > 0) {
+      tracks.forEach((track, idx) => {
+        if (track.cover !== undefined && typeof track.cover !== 'string' && track.cover !== null) {
+          console.warn(`MusicPlayer: track[${idx}].cover is not a string:`, track.cover, 'for track:', track.title);
+        }
+      });
+    }
+  }, [tracks]);
+
   const searchSongs = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -68,7 +85,7 @@ const MusicPlayer: React.FC = () => {
     let formattedTracks: Track[] = [];
 
     // Handle Monochrome response
-    if (data.data && data.data.items) {
+    if (data.data && Array.isArray(data.data.items)) {
       formattedTracks = data.data.items.map((item: any) => ({
         id: item.id,
         title: item.title,
@@ -80,23 +97,23 @@ const MusicPlayer: React.FC = () => {
       }));
     } 
     // Handle Saavn fallback response
-    else if (data.data && data.data.results) {
+    else if (data.data && Array.isArray(data.data.results)) {
       formattedTracks = data.data.results.map((item: any) => ({
         id: item.id,
         title: item.name || item.title,
         artist: item.artists?.primary?.[0]?.name || item.artist || item.subtitle || 'Unknown Artist',
         album: item.album?.name || item.album || 'Unknown Album',
-        cover: item.image?.[2]?.link || item.image?.[2]?.url || item.image?.[0]?.link || (typeof item.image === 'string' ? item.image : ''),
+        cover: (Array.isArray(item.image) ? (item.image[2]?.link || item.image[2]?.url || item.image[0]?.link || item.image[0]?.url || (typeof item.image[0] === 'string' ? item.image[0] : '')) : (typeof item.image === 'string' ? item.image : '')),
         streamUrl: item.downloadUrl?.[4]?.link || item.downloadUrl?.[4]?.url || (typeof item.downloadUrl === 'string' ? item.downloadUrl : undefined),
         source: 'saavn'
       }));
-    } else if (data.results) {
+    } else if (Array.isArray(data.results)) {
       formattedTracks = data.results.map((item: any) => ({
         id: item.id,
         title: item.name || item.title,
         artist: item.artists?.primary?.[0]?.name || item.artist || item.subtitle || 'Unknown Artist',
         album: item.album?.name || item.album || 'Unknown Album',
-        cover: item.image?.[2]?.link || item.image?.[2]?.url || item.image?.[0]?.link || (typeof item.image === 'string' ? item.image : ''),
+        cover: (Array.isArray(item.image) ? (item.image[2]?.link || item.image[2]?.url || item.image[0]?.link || item.image[0]?.url || (typeof item.image[0] === 'string' ? item.image[0] : '')) : (typeof item.image === 'string' ? item.image : '')),
         streamUrl: item.downloadUrl?.[4]?.link || item.downloadUrl?.[4]?.url || (typeof item.downloadUrl === 'string' ? item.downloadUrl : undefined),
         source: 'saavn'
       }));
@@ -270,7 +287,7 @@ const MusicPlayer: React.FC = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.5 }}
-                  src={currentTrack.cover || 'https://picsum.photos/seed/music/200/200'} 
+                  src={typeof currentTrack.cover === 'string' && currentTrack.cover ? currentTrack.cover : 'https://picsum.photos/seed/music/200/200'} 
                   alt={currentTrack.title} 
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   referrerPolicy="no-referrer"
@@ -427,7 +444,7 @@ const MusicPlayer: React.FC = () => {
                       >
                         <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 relative">
                           <img 
-                            src={track.cover || 'https://picsum.photos/seed/music/200/200'} 
+                            src={typeof track.cover === 'string' && track.cover ? track.cover : 'https://picsum.photos/seed/music/200/200'} 
                             alt={track.title} 
                             className="w-full h-full object-cover" 
                             referrerPolicy="no-referrer"

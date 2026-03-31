@@ -16,6 +16,14 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, category, onOpenDetails }) =>
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentImageUrl, setCurrentImageUrl] = useState(item.img || '');
   const [isSearching, setIsSearching] = useState(false);
+
+  // Debugging src prop
+  useEffect(() => {
+    if (currentImageUrl !== undefined && typeof currentImageUrl !== 'string' && currentImageUrl !== null) {
+      console.warn('ItemCard: currentImageUrl is not a string:', currentImageUrl, 'for item:', item.t);
+    }
+  }, [currentImageUrl, item.t]);
+
   const [translatedTitle, setTranslatedTitle] = useState(item.t);
   const { translateDynamic, language } = useLanguage();
   
@@ -83,7 +91,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, category, onOpenDetails }) =>
       )}
       
       <img 
-        src={currentImageUrl || 'https://picsum.photos/seed/poster/400/600'} 
+        src={typeof currentImageUrl === 'string' && currentImageUrl ? currentImageUrl : 'https://picsum.photos/seed/poster/400/600'} 
         alt={item.t} 
         loading="lazy"
         referrerPolicy="no-referrer"

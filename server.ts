@@ -94,7 +94,8 @@ app.get('/api/music/monochrome/search', async (req, res) => {
           break; // Don't retry if it's not a 5xx error
         } catch (e: any) {
           lastError = e;
-          console.error(`Monochrome mirror attempt failed: ${url}. Error: ${e.message}`);
+          // Use console.warn instead of console.error for individual mirror failures to reduce noise
+          console.warn(`Monochrome mirror attempt failed: ${url}. Error: ${e.message}`);
           retries--;
           if (retries > 0) await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
         }

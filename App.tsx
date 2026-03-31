@@ -135,7 +135,23 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [proxySearch, setProxySearch] = useState('');
   const [customLogo, setCustomLogo] = useState<string>(DEFAULT_LOGO);
+
+  // Debugging customLogo
+  useEffect(() => {
+    if (customLogo !== undefined && typeof customLogo !== 'string' && customLogo !== null) {
+      console.warn('App: customLogo is not a string:', customLogo);
+    }
+  }, [customLogo]);
+
   const [selectedItem, setSelectedItem] = useState<{item: LibraryItem, category: string, showPlayer: boolean} | null>(null);
+
+  // Debugging selectedItem.item.img
+  useEffect(() => {
+    if (selectedItem?.item?.img !== undefined && typeof selectedItem?.item?.img !== 'string' && selectedItem?.item?.img !== null) {
+      console.warn('App: selectedItem.item.img is not a string:', selectedItem.item.img, 'for item:', selectedItem.item.t);
+    }
+  }, [selectedItem]);
+
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   const [favorites, setFavorites] = useState<FavoriteItem[]>(() => {
     const saved = localStorage.getItem('chillzone_favorites');
@@ -681,7 +697,7 @@ const App: React.FC = () => {
                                 <div className="w-40 h-40 mx-auto mb-10 rounded-[40px] overflow-hidden border-2 border-surface-hover group-hover:border-accent/40 transition-all duration-700 shadow-inner relative bg-bg">
                                   {staff.img ? (
                                     <img 
-                                      src={staff.img || 'https://picsum.photos/seed/avatar/200/200'} 
+                                      src={typeof staff.img === 'string' && staff.img ? staff.img : 'https://picsum.photos/seed/avatar/200/200'} 
                                       className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
                                       referrerPolicy="no-referrer"
                                     />
@@ -786,10 +802,109 @@ const App: React.FC = () => {
                       />
                     )}
                     {activeCategory === 'chat' && (
-                      user ? <ChatRoom isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} /> : <div className="text-center py-20 text-text-muted">Please sign up to access the chat room.</div>
+                      <div className="mt-20 max-w-[1600px] mx-auto pb-40 px-4 relative">
+                        <motion.div 
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-center mb-16"
+                        >
+                          <h1 className="text-7xl font-black italic uppercase tracking-tighter text-white mb-4">Community Chat</h1>
+                          <p className="text-text-secondary max-w-2xl mx-auto font-medium">Connect with other members of ChillZone. Share your thoughts, request content, and hang out with the community.</p>
+                        </motion.div>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 relative z-10">
+                          <div className="lg:col-span-3">
+                            {user ? <ChatRoom isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} /> : <div className="text-center py-20 text-text-muted">Please sign up to access the chat room.</div>}
+                          </div>
+                          <div className="space-y-6">
+                            <div className="bg-surface border border-white/5 rounded-2xl p-6 shadow-xl">
+                              <h3 className="text-xl font-black italic uppercase tracking-tighter text-white mb-4 flex items-center gap-2">
+                                <ShieldCheck className="text-accent" size={20} />
+                                Chat Rules
+                              </h3>
+                              <ul className="space-y-3 text-sm text-text-secondary font-medium">
+                                <li className="flex gap-2">
+                                  <span className="text-accent font-bold">01.</span>
+                                  Be respectful to all members.
+                                </li>
+                                <li className="flex gap-2">
+                                  <span className="text-accent font-bold">02.</span>
+                                  No spamming or excessive caps.
+                                </li>
+                                <li className="flex gap-2">
+                                  <span className="text-accent font-bold">03.</span>
+                                  No NSFW content or links.
+                                </li>
+                                <li className="flex gap-2">
+                                  <span className="text-accent font-bold">04.</span>
+                                  No self-promotion or advertising.
+                                </li>
+                                <li className="flex gap-2">
+                                  <span className="text-accent font-bold">05.</span>
+                                  Listen to the moderators.
+                                </li>
+                              </ul>
+                            </div>
+                            
+                            <div className="bg-accent/10 border border-accent/20 rounded-2xl p-6 shadow-xl">
+                              <h3 className="text-xl font-black italic uppercase tracking-tighter text-accent mb-2">Support Us</h3>
+                              <p className="text-xs text-text-secondary mb-4">Help keep ChillZone alive by donating. Donators get a special badge in chat!</p>
+                              <button 
+                                onClick={() => setActiveCategory('donate')}
+                                className="w-full py-3 bg-accent text-white rounded-xl font-black uppercase tracking-widest text-xs hover:bg-accent/90 transition-colors"
+                              >
+                                Donate Now
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px] pointer-events-none"></div>
+                        <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[120px] pointer-events-none"></div>
+                      </div>
                     )}
                     {activeCategory === 'admin-chat' && (
-                      isAdmin ? <ChatRoom collectionName="admin_chat" isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} /> : <div className="text-center py-20 text-text-muted">Authorized personnel only.</div>
+                      <div className="mt-20 max-w-[1600px] mx-auto pb-40 px-4 relative">
+                        <motion.div 
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-center mb-16"
+                        >
+                          <h1 className="text-7xl font-black italic uppercase tracking-tighter text-white mb-4">Staff Lounge</h1>
+                          <p className="text-text-secondary max-w-2xl mx-auto font-medium">Private discussion area for ChillZone staff members. Coordinate updates and manage the site.</p>
+                        </motion.div>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 relative z-10">
+                          <div className="lg:col-span-3">
+                            {isAdmin ? <ChatRoom collectionName="admin_chat" isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} /> : <div className="text-center py-20 text-text-muted">Authorized personnel only.</div>}
+                          </div>
+                          <div className="space-y-6">
+                            <div className="bg-surface border border-white/5 rounded-2xl p-6 shadow-xl">
+                              <h3 className="text-xl font-black italic uppercase tracking-tighter text-white mb-4 flex items-center gap-2">
+                                <ShieldCheck className="text-accent" size={20} />
+                                Staff Protocol
+                              </h3>
+                              <ul className="space-y-3 text-sm text-text-secondary font-medium">
+                                <li className="flex gap-2">
+                                  <span className="text-accent font-bold">01.</span>
+                                  Keep discussions professional.
+                                </li>
+                                <li className="flex gap-2">
+                                  <span className="text-accent font-bold">02.</span>
+                                  Do not share staff info.
+                                </li>
+                                <li className="flex gap-2">
+                                  <span className="text-accent font-bold">03.</span>
+                                  Report all site issues here.
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px] pointer-events-none"></div>
+                        <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[120px] pointer-events-none"></div>
+                      </div>
                     )}
                     {activeCategory === 'movies' && <LibrarySection title={t('Movies')} items={MOVIES_DATA} category="movie" searchQuery="" onOpenDetails={handleOpenDetails} showSearch={true} />}
                     {activeCategory === 'tv shows' && <LibrarySection title={t('TV Shows')} items={TV_DATA} category="tv" searchQuery="" onOpenDetails={handleOpenDetails} showSearch={true} />}
@@ -880,7 +995,7 @@ const App: React.FC = () => {
               {selectedItem.showPlayer ? null : (
                 <div className="w-full md:w-2/5 aspect-[2/3] md:h-auto relative overflow-hidden group/modal-img bg-bg shrink-0">
                   <img 
-                    src={selectedItem.item.img || 'https://picsum.photos/seed/poster/400/600'} 
+                    src={typeof selectedItem.item.img === 'string' && selectedItem.item.img ? selectedItem.item.img : 'https://picsum.photos/seed/poster/400/600'} 
                     className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover/modal-img:scale-110" 
                     referrerPolicy="no-referrer"
                   />

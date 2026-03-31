@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { db, auth } from '../firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import EmojiPicker, { Theme as EmojiTheme } from 'emoji-picker-react';
-import { Send, Trash2, Edit2, Check, X, ShieldCheck, Smile, DollarSign } from 'lucide-react';
+import { Send, Trash2, Edit2, Check, X, ShieldCheck, Smile, DollarSign, MessageSquare } from 'lucide-react';
 
 interface ChatRoomProps {
   collectionName?: string;
@@ -72,7 +72,22 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat', isAdmin = 
   };
 
   return (
-    <div className="flex flex-col h-full bg-bg border border-white/5 rounded-2xl p-4">
+    <div className="flex flex-col h-[950px] max-h-[95vh] bg-bg border border-white/5 rounded-2xl p-4 shadow-2xl relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-20 -right-20 w-[400px] h-[400px] rounded-full opacity-20" style={{ background: 'var(--accent-glow-dim)', filter: 'blur(100px)' }}></div>
+      </div>
+      <div className="relative z-10 flex flex-col h-full">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
+            <MessageSquare size={20} />
+          </div>
+          <div>
+            <h2 className="text-lg font-black italic uppercase tracking-tighter text-white">{collectionName === 'admin_chat' ? 'Staff Lounge' : 'Public Chat'}</h2>
+            <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest">Live Community Discussion</p>
+          </div>
+        </div>
+      </div>
       <div className="flex-1 overflow-y-auto space-y-4 mb-4 custom-scrollbar">
         {messages.map((msg) => (
           <div key={msg.id} className={`flex flex-col ${msg.uid === auth.currentUser?.uid ? 'items-end' : 'items-start'}`}>
@@ -170,6 +185,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat', isAdmin = 
           <Send size={18} />
         </button>
       </form>
+    </div>
     </div>
   );
 };
