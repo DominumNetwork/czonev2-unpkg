@@ -57,16 +57,21 @@ service cloud.firestore {
       return isAuthenticated() && (
         (request.auth.token.email == "darkfn1234567890@gmail.com" && request.auth.token.email_verified == true) ||
         (request.auth.token.email == "whitecaleb888@gmail.com" && request.auth.token.email_verified == true)
-      );
+      ) || isCoOwner();
     }
 
     function isAppOwner() {
       return isSuperAdmin() || (isAuthenticated() && request.auth.token.email == "calebwhite2@chisd.net" && request.auth.token.email_verified == true);
     }
 
+    function isCoOwner() {
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return isAuthenticated() && userDoc.data != null && userDoc.data.role == 'co-owner';
+    }
+
     function isAdmin() {
       let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      return isAppOwner() || (isAuthenticated() && userDoc.data != null && userDoc.data.role == 'admin');
+      return isAppOwner() || (isAuthenticated() && userDoc.data != null && (userDoc.data.role == 'admin' || userDoc.data.role == 'co-owner'));
     }
 
     function isValidEmail(email) {
@@ -87,7 +92,7 @@ service cloud.firestore {
              data.uid == request.auth.uid &&
              data.email == request.auth.token.email &&
              isValidEmail(data.email) &&
-             data.role in ['admin', 'user', 'donator'] &&
+             data.role in ['admin', 'co-owner', 'user', 'donator'] &&
              (!('photoURL' in data) || data.photoURL == null || isValidUrl(data.photoURL)) &&
              (!('favorites' in data) || data.favorites is list) &&
              (!('theme' in data) || data.theme is string) &&
@@ -129,12 +134,12 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
+      allow read: if isOwner(userId) || isAdmin() || isCoOwner();
       allow create: if isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == 'user' || isSuperAdmin() || isAllowedAdmin() || isAppOwner());
       allow update: if (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role) ||
-                    (isSuperAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']) && request.resource.data.role in ['admin', 'user', 'donator']) ||
+                    (isSuperAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']) && request.resource.data.role in ['admin', 'co-owner', 'user', 'donator']) ||
                     (isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']) && request.resource.data.role == 'donator') ||
-                    (isOwner(userId) && (isAllowedAdmin() || isAppOwner()) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']) && request.resource.data.role == 'admin');
+                    (isOwner(userId) && (isAllowedAdmin() || isAppOwner()) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']) && (request.resource.data.role == 'admin' || request.resource.data.role == 'co-owner'));
     }
 
     match /allowed_admins/{docId} {

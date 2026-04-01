@@ -51,8 +51,6 @@ app.get('/api/analytics/data', async (req, res) => {
 // Music Proxy Routes
 const MONOCHROME_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-  'Referer': 'https://monochrome.samidy.com/',
-  'Origin': 'https://monochrome.samidy.com',
   'Accept': 'application/json, text/plain, */*',
   'Accept-Language': 'en-US,en;q=0.9',
   'Cache-Control': 'no-cache',
@@ -67,11 +65,8 @@ app.get('/api/music/monochrome/search', async (req, res) => {
     console.log(`Monochrome search for: ${query}`);
 
     const monochromeMirrors = [
-      `https://monochrome.samidy.com/search?s=${encodeURIComponent(query)}`,
-      `https://monochrome.samidy.com/search?q=${encodeURIComponent(query)}`,
-      `https://monochrome.samidy.com/search?query=${encodeURIComponent(query)}`,
-      `https://monochrome.samidy.com/v1/search?s=${encodeURIComponent(query)}`,
-      `https://monochrome.samidy.com/v2/search?s=${encodeURIComponent(query)}`
+      `https://hifi.monochrome.tf/search/?s=${encodeURIComponent(query)}`,
+      `https://api.monochrome.tf/search/?s=${encodeURIComponent(query)}`
     ];
 
     let lastError = null;
@@ -137,7 +132,9 @@ app.get('/api/music/monochrome/track/:id', async (req, res) => {
     const quality = req.query.quality || 'HIGH';
     
     const monochromeTrackMirrors = [
-      `https://monochrome.samidy.com/track?id=${id}&quality=${quality}`
+      `https://ohio.monochrome.tf/track/?id=${id}&quality=${quality}`,
+      `https://virginia.monochrome.tf/track/?id=${id}&quality=${quality}`,
+      `https://frankfurt.monochrome.tf/track/?id=${id}&quality=${quality}`
     ];
 
     for (const url of monochromeTrackMirrors) {
