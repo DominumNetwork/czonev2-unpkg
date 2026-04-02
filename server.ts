@@ -65,7 +65,6 @@ app.get('/api/music/monochrome/search', async (req, res) => {
     console.log(`Monochrome search for: ${query}`);
 
     const monochromeMirrors = [
-      `https://hifi.monochrome.tf/search/?s=${encodeURIComponent(query)}`,
       `https://api.monochrome.tf/search/?s=${encodeURIComponent(query)}`
     ];
 

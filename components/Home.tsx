@@ -36,7 +36,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, onSearch }) => {
 
   const sections = [
     {
-      title: "Welcome to Krypton!",
+      title: "Welcome to Monochrome!",
       desc: "Browse the web freely. Let's show you around.",
       icon: <Globe className="text-accent" size={32} />,
     },
@@ -81,7 +81,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, onSearch }) => {
           transition={{ duration: 0.5, type: "spring" }}
           className="text-8xl md:text-9xl font-display uppercase tracking-tighter leading-none"
         >
-          KRYPT<span className="text-accent">ON</span>
+          MONO<span className="text-accent">CHROME</span>
         </motion.h1>
         
         <motion.form 

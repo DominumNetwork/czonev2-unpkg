@@ -818,7 +818,7 @@ export const APPS_DATA: LibraryItem[] = [
 ];
 
 export const CLOAK_OPTIONS = [
-  { id: 'none', name: 'None', icon: '❌', title: 'KRYPTON', favicon: '/favicon.ico' },
+  { id: 'none', name: 'None', icon: '❌', title: 'MONOCHROME', favicon: '/favicon.ico' },
   { id: 'google', name: 'Google', icon: '🔍', title: 'Google', favicon: 'https://www.google.com/favicon.ico' },
   { id: 'drive', name: 'Google Drive', icon: '📂', title: 'My Drive - Google Drive', favicon: 'https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png' },
   { id: 'canvas', name: 'Canvas', icon: '🎓', title: 'Dashboard', favicon: 'https://du11hjcvx0uqb.cloudfront.net/br/dist/images/favicon-e10d657a73.ico' },
@@ -826,6 +826,7 @@ export const CLOAK_OPTIONS = [
   { id: 'zoom', name: 'Zoom', icon: '📹', title: 'Zoom Meetings', favicon: 'https://st1.zoom.us/zoom.ico' },
 ];
 export const PROXIES_DATA: ProxyItem[] = [
+  { url: "https://monochrome.tf/", name: "Monochrome" },
   { url: "https://pizzatowerplay.com/", name: "Pizza Tower" },
   { url: "https://mathhomeworkhelp.pythagorasweb.com.ar/index.html", name: "Math Homework Help" },
   { url: "https://cookiss4u.wasmer.app/", name: "Cookiss4u" },
