@@ -473,12 +473,6 @@ const App: React.FC = () => {
             >
               Appeal Ban
             </button>
-            <button 
-              onClick={() => logout()}
-              className="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-xs transition-all border border-white/5"
-            >
-              Logout
-            </button>
           </div>
         </motion.div>
         <AppealModal 
