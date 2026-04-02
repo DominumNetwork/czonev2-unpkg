@@ -30,6 +30,27 @@ export const MOVIES: Movie[] = [
                 year: "2025"
             },
             {
+                title: "Hoppers",
+                imageUrl: "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRRmZawCA6nU54kqX2dugkNQi4A58G-yqWyUu0E3YwbaVp5GgTC",
+                link: "https://drive.google.com/file/d/1NkmCNf5CUML_KZvNi4fgGKA8r7fpXIdd/view?usp=drive_link",
+                description: "A scientist discovers a way to transfer a human's consciousness into a robotic animal.",
+                year: "2026"
+            },
+            {
+                title: "GOAT",
+                imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGKavSrszp_2r4b96_ThHkqx3c0NJjrT3oTn6mBoAAV_4cp6rw",
+                link: "https://drive.google.com/file/d/1E8z26bLiI3CdIjNCuoaPlT0mZum4dBix/view?usp=sharing",
+                description: "A small goat with big dreams gets a once-in-a-lifetime shot to join the pros and play roarball, a high-intensity, co-ed, full-contact sport dominated by the fastest, fiercest animals in the world.",
+                year: "2026"
+            },
+            {
+                title: "Joe's College Road Trip",
+                imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSQ2dnKKC8DQp0G9BNla7b5oE_-0LMZxR7zwolrwnUlWM-6_xQ0",
+                link: "https://drive.google.com/file/d/1bIHwYf80n_DovwE2D7irPbgkyaVZOChx/view?usp=drive_link",
+                description: "To teach his sheltered grandson about the real world, Madea's foul-mouthed brother Joe takes the college-bound teen on a raucous cross-country road trip.",
+                year: "2026"
+            },
+            {
                 title: "Spider-Man: Into the Spider-Verse",
                 imageUrl: "https://cdn.jsdelivr.net/gh/dino-cmxy/Chillkirbcentrall@main/MV5BMjMwNDkxMTgzOF5BMl5BanBnXkFtZTgwNTkwNTQ3NjM%40._V1_FMjpg_UX1000_.jpg",
                 link: "https://drive.google.com/file/d/1V3Bq0lrDQUxJay5DDs3gK69ZvRNb1j2u/view",
@@ -63,6 +84,13 @@ export const MOVIES: Movie[] = [
                 link: "https://drive.google.com/file/d/1q2pk3lo5VIDWKQq2lCh_UTC_V9Zkv-_X/view",
                 description: "Mario and Luigi save a princess in underground world.",
                 year: "2023"
+            },
+            {
+                title: "The Super Mario Galaxy Movie",
+                imageUrl: "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcSbQAer_UacWJzfW1n8AREzPD6-MRfyAZT5aBEIhVYZqo0mclfO",
+                link: "https://drive.google.com/file/d/1Sr1dIisyBJgnCbW4WrgSIcLO8uiNSTv2/view?usp=drive_link",
+                description: "Mario ventures into space, exploring cosmic worlds and tackling galactic challenges far from the familiar Mushroom Kingdom.",
+                year: "2026"
             },
             {
                 title: "Sonic the Hedgehog",
@@ -438,7 +466,7 @@ export const MOVIES: Movie[] = [
             {
                 title: "The Day The Earth Blew Up",
                 imageUrl: "https://cdn.jsdelivr.net/gh/dino-cmxy/Chillkirbcentrall@main/MV5BOTgxODk4OTQtMjc2MC00NGRmLWJlMmMtNTdlZjI1NDE0NzE0XkEyXkFqcGc%40._V1_FMjpg_UX1000_.jpg",
-                link: "https://drive.google.com/file/d/1EDmMpex-Xs1V9CT4J4UarVDEs0zRyLqt/view?usp=sharing",
+                link: "https://drive.google.com/file/d/1HPrhjFu-MJ_IIUVVtVBgRs2OXIbld86Q/view",
                 description: "Unlikely heroes save Earth from alien force.",
                 year: "2024"
             },
@@ -2893,24 +2921,10 @@ export const MOVIES: Movie[] = [
                 year: "2014"
             },
             {
-                title: "Hoppers",
-                imageUrl: "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRRmZawCA6nU54kqX2dugkNQi4A58G-yqWyUu0E3YwbaVp5GgTC",
-                link: "https://drive.google.com/file/d/1NkmCNf5CUML_KZvNi4fgGKA8r7fpXIdd/view?usp=drive_link",
-                description: "A scientist discovers a way to transfer a human's consciousness into a robotic animal.",
-                year: "2026"
-            },
-            {
                 title: "Red One",
                 imageUrl: "https://m.media-amazon.com/images/M/MV5BMjA4NDkwNzktNjJkYi00ODNhLWFhYzQtYzk5NjU4MDM0OWZmXkEyXkFqcGc@._V1_.jpg",
                 link: "https://drive.google.com/file/d/1_placeholder_red_one/view?usp=sharing",
                 description: "After Santa Claus (code name: Red One) is kidnapped, the North Pole's Head of Security must team up with the world's most infamous bounty hunter in a globe-trotting, action-packed mission to save Christmas.",
                 year: "2024"
-            },
-            {
-                title: "Joe's College Road Trip",
-                imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSQ2dnKKC8DQp0G9BNla7b5oE_-0LMZxR7zwolrwnUlWM-6_xQ0",
-                link: "https://drive.google.com/file/d/1bIHwYf80n_DovwE2D7irPbgkyaVZOChx/view?usp=drive_link",
-                description: "To teach his sheltered grandson about the real world, Madea's foul-mouthed brother Joe takes the college-bound teen on a raucous cross-country road trip.",
-                year: "2026"
             }
 ];

@@ -55,13 +55,13 @@ service cloud.firestore {
 
     function isSuperAdmin() {
       return isAuthenticated() && (
-        (request.auth.token.email == "darkfn1234567890@gmail.com" && request.auth.token.email_verified == true) ||
-        (request.auth.token.email == "whitecaleb888@gmail.com" && request.auth.token.email_verified == true)
+        (request.auth.token.email.lower() == "darkfn1234567890@gmail.com" && request.auth.token.email_verified == true) ||
+        (request.auth.token.email.lower() == "whitecaleb888@gmail.com" && request.auth.token.email_verified == true)
       ) || isCoOwner();
     }
 
     function isAppOwner() {
-      return isSuperAdmin() || (isAuthenticated() && request.auth.token.email == "calebwhite2@chisd.net" && request.auth.token.email_verified == true);
+      return isSuperAdmin() || (isAuthenticated() && request.auth.token.email.lower() == "calebwhite2@chisd.net" && request.auth.token.email_verified == true);
     }
 
     function isCoOwner() {
@@ -71,7 +71,7 @@ service cloud.firestore {
 
     function isAdmin() {
       let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      return isAppOwner() || (isAuthenticated() && userDoc.data != null && (userDoc.data.role == 'admin' || userDoc.data.role == 'co-owner'));
+      return isAppOwner() || (isAuthenticated() && userDoc.data != null && (userDoc.data.role == 'admin' || userDoc.data.role == 'co-owner' || userDoc.data.role == 'owner'));
     }
 
     function isValidEmail(email) {
@@ -92,7 +92,7 @@ service cloud.firestore {
              data.uid == request.auth.uid &&
              data.email == request.auth.token.email &&
              isValidEmail(data.email) &&
-             data.role in ['admin', 'co-owner', 'user', 'donator'] &&
+             data.role in ['admin', 'co-owner', 'owner', 'user', 'donator'] &&
              (!('photoURL' in data) || data.photoURL == null || isValidUrl(data.photoURL)) &&
              (!('favorites' in data) || data.favorites is list) &&
              (!('theme' in data) || data.theme is string) &&

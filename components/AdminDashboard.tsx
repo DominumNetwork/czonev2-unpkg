@@ -9,7 +9,7 @@ interface User {
   uid: string;
   email: string | null;
   displayName: string | null;
-  role: 'admin' | 'co-owner' | 'user' | 'donator';
+  role: 'admin' | 'co-owner' | 'owner' | 'user' | 'donator';
   createdAt: Timestamp;
 }
 
@@ -41,9 +41,10 @@ interface AllowedAdmin {
 interface AdminDashboardProps {
   onClose: () => void;
   isSuperAdmin: boolean;
+  isAdmin: boolean;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, isAdmin }) => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -263,7 +264,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin }
           { id: 'announcements', icon: Megaphone, label: 'Announcements' },
           { id: 'suggestions', icon: Send, label: 'Suggestions' },
           { id: 'analytics', icon: Activity, label: 'Analytics' },
-          ...(isSuperAdmin ? [
+          ...(isSuperAdmin || isAdmin ? [
             { id: 'users', icon: Users, label: 'User Management' },
             { id: 'admins', icon: ShieldCheck, label: 'Manage Admins' }
           ] : [])
@@ -485,6 +486,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin }
                       <option value="user">User</option>
                       <option value="admin">Admin</option>
                       <option value="co-owner">Co-Owner</option>
+                      <option value="owner">Owner</option>
                       <option value="donator">Donator</option>
                     </select>
                   </div>

@@ -9,6 +9,11 @@ interface UpdateLogProps {
 
 const UPDATES = [
   {
+    version: "",
+    date: "2026-04-01T23:01:33",
+    changes: ["Added Super Mario Galaxy Movie"]
+  },
+  {
     version: "1.3.0",
     date: "2026-03-30",
     changes: ["New Theme Added- April Fools Theme 🤡", "New Theme Added- Halloween Theme 🎃"]
@@ -41,7 +46,7 @@ const UPDATES = [
 ];
 
 const getDaysAgo = (dateStr: string) => {
-  const date = new Date(dateStr + "T00:00:00");
+  const date = new Date(dateStr.includes('T') ? dateStr : dateStr + "T00:00:00");
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const diffTime = now.getTime() - date.getTime();
