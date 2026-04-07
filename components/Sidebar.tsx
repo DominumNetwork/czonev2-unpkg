@@ -7,7 +7,6 @@ import { useLanguage } from '../context/LanguageContext';
 
 interface SidebarProps {
   activeCategory: Category;
-  onSelect: (category: Category) => void;
   logoUrl: string;
   onLogoChange: (newLogo: string) => void;
   isAdmin?: boolean;
@@ -15,7 +14,7 @@ interface SidebarProps {
   isSidebarVisible?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, onLogoChange, isAdmin, isChatCategory, isSidebarVisible }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeCategory, logoUrl, onLogoChange, isAdmin, isChatCategory, isSidebarVisible }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
   const [isHovered, setIsHovered] = useState(false);
@@ -50,6 +49,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, on
     { id: 'proxies' as Category, label: 'Proxies', icon: Shield },
     { id: 'partners' as Category, label: 'Partners', icon: Users },
   ];
+
+  const handleSelect = (id: Category) => {
+    const path = '/' + id.replace(' ', '-');
+    window.location.href = path;
+  };
 
   return (
     <motion.aside 
@@ -96,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelect, logoUrl, on
             return (
               <button
                 key={item.id}
-                onClick={() => onSelect(item.id)}
+                onClick={() => handleSelect(item.id)}
                 className={`flex flex-row items-center gap-2 transition-all duration-300 group ${
                   isActive ? 'text-accent' : 'text-text-secondary hover:text-white'
                 }`}

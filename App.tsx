@@ -132,7 +132,7 @@ const ScrambleEffect: React.FC = () => {
 const getInitialCategory = (): Category => {
   const path = window.location.pathname.substring(1).toLowerCase();
   const normalizedPath = path.replace('-', ' ') as Category;
-  const validCategories: Category[] = ['home', 'movies', 'tv shows', 'anime', 'manga', 'proxies', 'partners', 'dev', 'support', 'donate', 'apps', 'browser', 'settings', 'music', 'games'];
+  const validCategories: Category[] = ['home', 'movies', 'tv shows', 'anime', 'manga', 'proxies', 'partners', 'dev', 'support', 'donate', 'apps', 'browser', 'settings', 'music', 'games', 'chat', 'admin-chat'];
   
   if (validCategories.includes(normalizedPath)) {
     return normalizedPath;
@@ -154,6 +154,10 @@ const App: React.FC = () => {
     }, 800);
     return () => clearTimeout(timer);
   }, [activeCategory]);
+
+  const navigate = (cat: Category) => {
+    window.location.href = '/' + cat.replace(' ', '-');
+  };
 
   // Debugging customLogo
   useEffect(() => {
@@ -373,17 +377,10 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const path = activeCategory.replace(' ', '-');
-    if (window.location.pathname !== `/${path}`) {
-      window.history.pushState(null, '', `/${path}`);
-    }
-  }, [activeCategory]);
-  
-  useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname.substring(1).toLowerCase();
       const normalizedPath = path.replace('-', ' ') as Category;
-      const validCategories: Category[] = ['home', 'movies', 'tv shows', 'anime', 'manga', 'proxies', 'partners', 'dev', 'support', 'donate', 'apps', 'browser', 'settings', 'music', 'games'];
+      const validCategories: Category[] = ['home', 'movies', 'tv shows', 'anime', 'manga', 'proxies', 'partners', 'dev', 'support', 'donate', 'apps', 'browser', 'settings', 'music', 'games', 'chat', 'admin-chat'];
       
       if (validCategories.includes(normalizedPath)) {
         setActiveCategory(normalizedPath);
@@ -533,7 +530,7 @@ const App: React.FC = () => {
             </div>
           </div>
           <button 
-            onClick={() => setActiveCategory('donate')} 
+            onClick={() => navigate('donate')} 
             className="bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-1 rounded-full text-xs uppercase tracking-wider transition-colors shrink-0 ml-4 z-10 relative"
           >
             Donate
@@ -559,7 +556,6 @@ const App: React.FC = () => {
         {!isAuthModalOpen && !isAdminOpen && (
             <Sidebar 
             activeCategory={activeCategory} 
-            onSelect={(cat) => { setActiveCategory(cat); setSearchQuery(''); setIsSettingsOpen(false); }} 
             logoUrl={customLogo} 
             onLogoChange={handleUpdateLogo}
             isAdmin={isAdmin}
@@ -958,7 +954,7 @@ const App: React.FC = () => {
                               <h3 className="text-xl font-black italic uppercase tracking-tighter text-accent mb-2">Support Us</h3>
                               <p className="text-xs text-text-secondary mb-4">Help keep ChillZone alive by donating. Donators get a special badge in chat!</p>
                               <button 
-                                onClick={() => setActiveCategory('donate')}
+                                onClick={() => navigate('donate')}
                                 className="w-full py-3 bg-accent text-white rounded-xl font-black uppercase tracking-widest text-xs hover:bg-accent/90 transition-colors"
                               >
                                 Donate Now
