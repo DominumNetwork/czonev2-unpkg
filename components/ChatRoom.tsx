@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db, auth, handleFirestoreError, OperationType } from '../firebase';
-import { collection, addDoc, query, orderBy, getDocs, getDoc, serverTimestamp, doc, deleteDoc, updateDoc, limit } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, getDocs, getDoc, serverTimestamp, doc, deleteDoc, updateDoc, setDoc, limit } from 'firebase/firestore';
 import EmojiPicker, { Theme as EmojiTheme } from 'emoji-picker-react';
-import { Send, Trash2, Edit2, Check, X, ShieldCheck, Smile, DollarSign, MessageSquare, AlertCircle, Zap, RefreshCw } from 'lucide-react';
+import { Send, Trash2, Edit2, Check, X, ShieldCheck, Smile, DollarSign, MessageSquare, AlertCircle, Zap, RefreshCw, Ban } from 'lucide-react';
 
 interface ChatRoomProps {
   collectionName?: string;
@@ -145,7 +145,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat', isAdmin = 
     if (!banConfirm || !isSuperAdmin) return;
     
     try {
-      await updateDoc(doc(db, 'users', banConfirm.uid), { banned: true });
+      await setDoc(doc(db, 'users', banConfirm.uid), { banned: true }, { merge: true });
       setError(`User ${banConfirm.displayName} has been banned.`);
       setTimeout(() => setError(null), 3000);
       setBanConfirm(null);
@@ -254,6 +254,9 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat', isAdmin = 
               )}
               <div className="flex gap-2 mt-2 justify-end">
                 <button onClick={() => setReplyTo({ id: msg.id, text: msg.text, displayName: msg.displayName })} className="opacity-50 hover:opacity-100"><MessageSquare size={12} /></button>
+                {isSuperAdmin && msg.uid !== auth.currentUser?.uid && (
+                  <button onClick={() => setBanConfirm({ uid: msg.uid, displayName: msg.displayName, email: 'Direct Ban' })} className="opacity-50 hover:opacity-100 text-red-500"><Ban size={12} /></button>
+                )}
                 {msg.uid === auth.currentUser?.uid && editingMessageId !== msg.id && (
                   <>
                     <button onClick={() => startEdit(msg.id, msg.text)} className="opacity-50 hover:opacity-100"><Edit2 size={12} /></button>

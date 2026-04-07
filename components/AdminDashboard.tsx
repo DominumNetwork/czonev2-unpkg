@@ -165,11 +165,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
     }
   };
 
-  const handleUpdateUserRole = async (uid: string, newRole: 'admin' | 'co-owner' | 'user' | 'donator') => {
+  const handleDemoteAll = async () => {
+    if (!window.confirm('Are you sure you want to demote all admins/co-owners/owners to users? This cannot be undone.')) return;
     try {
-      await updateDoc(doc(db, 'users', uid), {
+      const usersRef = collection(db, 'users');
+      const querySnapshot = await getDocs(usersRef);
+      const updatePromises = querySnapshot.docs
+        .filter(docSnap => docSnap.data().role === 'admin' || docSnap.data().role === 'co-owner' || docSnap.data().role === 'owner')
+        .map(docSnap => setDoc(doc(db, 'users', docSnap.id), { role: 'user' }, { merge: true }));
+      await Promise.all(updatePromises);
+      setSuccess('All admins/co-owners/owners demoted successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError('Failed to demote users.');
+      handleFirestoreError(err, OperationType.UPDATE, 'users');
+    }
+  };
+
+  const handleUpdateUserRole = async (uid: string, newRole: 'admin' | 'co-owner' | 'owner' | 'user' | 'donator' | 'tester') => {
+    try {
+      await setDoc(doc(db, 'users', uid), {
         role: newRole
-      });
+      }, { merge: true });
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `users/${uid}`);
     }
@@ -471,6 +488,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-black uppercase tracking-widest text-neutral-500">User Management</h3>
+              {isSuperAdmin && (
+                <button onClick={handleDemoteAll} className="bg-red-500/10 text-red-500 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all">
+                  Demote All Admins/Owners
+                </button>
+              )}
               <div className="flex gap-2">
                 <select 
                   value={roleFilter}
@@ -527,13 +549,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
                         value={user.role}
                         onChange={(e) => handleUpdateUserRole(user.uid, e.target.value as any)}
                         className="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white focus:outline-none focus:border-accent/50 transition-all cursor-pointer"
+                        disabled={!isSuperAdmin && (user.role === 'admin' || user.role === 'owner' || user.role === 'co-owner')}
                       >
                         <option value="user">User</option>
-                        <option value="admin">Admin</option>
-                        <option value="co-owner">Co-Owner</option>
-                        <option value="owner">Owner</option>
                         <option value="donator">Donator</option>
                         <option value="tester">Tester</option>
+                        {isSuperAdmin && (
+                          <>
+                            <option value="admin">Admin</option>
+                            <option value="co-owner">Co-Owner</option>
+                            <option value="owner">Owner</option>
+                          </>
+                        )}
                       </select>
                       
                       {user.email?.toLowerCase() !== 'darkfn1234567890@gmail.com' && user.email?.toLowerCase() !== 'whitecaleb888@gmail.com' && (
