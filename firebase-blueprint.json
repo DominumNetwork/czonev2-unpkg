@@ -10,6 +10,7 @@
         "displayName": { "type": "string", "description": "The user's display name." },
         "photoURL": { "type": "string", "format": "url", "description": "The user's profile photo URL." },
         "role": { "type": "string", "enum": ["admin", "co-owner", "user", "donator"], "description": "The user's role in the application." },
+        "lastUsernameChange": { "type": "string", "format": "date-time", "description": "When the user last changed their username." },
         "createdAt": { "type": "string", "format": "date-time", "description": "When the user profile was created." }
       },
       "required": ["uid", "email", "role"]

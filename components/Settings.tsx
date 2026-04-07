@@ -3,8 +3,9 @@ import { VenetianMask, Palette, ChevronDown, Edit2, X, ExternalLink, Globe, User
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
-import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { deleteUser } from 'firebase/auth';
+import { doc, updateDoc, deleteDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { deleteUser, updateProfile } from 'firebase/auth';
+import { RefreshCw, CheckCircle2 } from 'lucide-react';
 
 export type ThemeColors = {
   bg: string;
@@ -379,6 +380,72 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const [newDisplayName, setNewDisplayName] = useState(auth.currentUser?.displayName || '');
+  const [isUpdatingUsername, setIsUpdatingUsername] = useState(false);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [usernameSuccess, setUsernameSuccess] = useState(false);
+  const [lastUsernameChange, setLastUsernameChange] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!auth.currentUser) return;
+      try {
+        const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+        if (userDoc.exists()) {
+          setLastUsernameChange(userDoc.data().lastUsernameChange);
+        }
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+      }
+    };
+    fetchUserData();
+  }, []);
+
+  const handleUpdateUsername = async () => {
+    if (!auth.currentUser || !newDisplayName.trim()) return;
+    if (newDisplayName === auth.currentUser.displayName) return;
+
+    // Check cooldown
+    if (lastUsernameChange) {
+      const lastChange = lastUsernameChange.toDate();
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - lastChange.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays <= 7) {
+        const remainingDays = 7 - Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        setUsernameError(`You can only change your username once every 7 days. Please wait ${remainingDays} more day(s).`);
+        return;
+      }
+    }
+
+    setIsUpdatingUsername(true);
+    setUsernameError(null);
+    setUsernameSuccess(false);
+
+    try {
+      // 1. Update Auth Profile
+      await updateProfile(auth.currentUser, { displayName: newDisplayName });
+
+      // 2. Update Firestore
+      const now = new Date();
+      await updateDoc(doc(db, 'users', auth.currentUser.uid), {
+        displayName: newDisplayName,
+        lastUsernameChange: serverTimestamp()
+      });
+
+      setLastUsernameChange({ toDate: () => now });
+      setUsernameSuccess(true);
+      setTimeout(() => setUsernameSuccess(false), 3000);
+    } catch (err: any) {
+      console.error("Error updating username:", err);
+      setUsernameError("Failed to update username. Please try again.");
+      handleFirestoreError(err, OperationType.UPDATE, `users/${auth.currentUser?.uid}`);
+    } finally {
+      setIsUpdatingUsername(false);
+    }
+  };
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmation !== 'DELETE') return;
@@ -821,6 +888,45 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                     <div>
                       <h3 className="text-lg font-bold">{auth.currentUser?.displayName || 'User'}</h3>
                       <p className="text-sm text-text-secondary">{auth.currentUser?.email}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 mb-8">
+                    <div>
+                      <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">
+                        {t('Display Name')}
+                      </label>
+                      <div className="flex gap-2">
+                        <input 
+                          type="text"
+                          value={newDisplayName}
+                          onChange={(e) => setNewDisplayName(e.target.value)}
+                          placeholder="Enter new username"
+                          className="flex-1 bg-bg border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-accent transition-colors text-white"
+                        />
+                        <button
+                          disabled={isUpdatingUsername || !newDisplayName.trim() || newDisplayName === auth.currentUser?.displayName}
+                          onClick={handleUpdateUsername}
+                          className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-bold hover:bg-accent/90 transition-all disabled:opacity-50 flex items-center gap-2"
+                        >
+                          {isUpdatingUsername ? (
+                            <RefreshCw size={16} className="animate-spin" />
+                          ) : usernameSuccess ? (
+                            <CheckCircle2 size={16} />
+                          ) : (
+                            <Edit2 size={16} />
+                          )}
+                          {usernameSuccess ? t('Updated') : t('Update')}
+                        </button>
+                      </div>
+                      {usernameError && (
+                        <p className="text-xs text-red-500 font-bold mt-2">{usernameError}</p>
+                      )}
+                      {lastUsernameChange && (
+                        <p className="text-[10px] text-text-secondary mt-2">
+                          {t('Last changed:')} {lastUsernameChange.toDate().toLocaleDateString()}
+                        </p>
+                      )}
                     </div>
                   </div>
 

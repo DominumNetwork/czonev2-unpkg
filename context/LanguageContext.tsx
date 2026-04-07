@@ -87,7 +87,11 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'Type "DELETE" to confirm': 'Type "DELETE" to confirm',
     'Confirm Deletion': 'Confirm Deletion',
     'Cancel': 'Cancel',
-    'Deleting...': 'Deleting...'
+    'Deleting...': 'Deleting...',
+    'Display Name': 'Display Name',
+    'Update': 'Update',
+    'Updated': 'Updated',
+    'Last changed:': 'Last changed:'
   },
   'es-ES': {
     'Theme': 'Tema',

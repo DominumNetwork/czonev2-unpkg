@@ -595,6 +595,45 @@ const App: React.FC = () => {
                 </motion.button>
               )}
 
+              <div className="relative">
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsSettingsOpen(!isSettingsOpen)} 
+                  className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all duration-300 relative ${
+                    isSettingsOpen 
+                      ? 'bg-accent border-accent text-white' 
+                      : 'bg-surface-hover border-white/5 text-text-secondary hover:text-white hover:border-white/20'
+                  }`}
+                  title={t('Settings')}
+                >
+                  <motion.div
+                    animate={{ rotate: isSettingsOpen ? 180 : 0 }}
+                    transition={{ duration: 0.4, ease: "backOut" }}
+                  >
+                    <SettingsIcon size={18} />
+                  </motion.div>
+                </motion.button>
+                <AnimatePresence>
+                  {isSettingsOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40" 
+                        onClick={() => setIsSettingsOpen(false)}
+                      />
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.95, y: 10, x: -20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 10, x: -20 }}
+                        className="absolute top-14 right-0 z-50 bg-surface border border-surface-hover rounded-2xl shadow-2xl overflow-hidden w-[400px] max-h-[80vh] flex flex-col"
+                      >
+                        <Settings onClose={() => setIsSettingsOpen(false)} />
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+
               {user && (
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -662,44 +701,6 @@ const App: React.FC = () => {
               >
                 <DiscordIcon size={18} />
               </motion.a>
-              <div className="relative">
-                <motion.button 
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setIsSettingsOpen(!isSettingsOpen)} 
-                  className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all duration-300 relative ${
-                    isSettingsOpen 
-                      ? 'bg-accent border-accent text-white' 
-                      : 'bg-surface-hover border-white/5 text-text-secondary hover:text-white hover:border-white/20'
-                  }`}
-                  title={t('Settings')}
-                >
-                  <motion.div
-                    animate={{ rotate: isSettingsOpen ? 180 : 0 }}
-                    transition={{ duration: 0.4, ease: "backOut" }}
-                  >
-                    <SettingsIcon size={18} />
-                  </motion.div>
-                </motion.button>
-                <AnimatePresence>
-                  {isSettingsOpen && (
-                    <>
-                      <div 
-                        className="fixed inset-0 z-40" 
-                        onClick={() => setIsSettingsOpen(false)}
-                      />
-                      <motion.div 
-                        initial={{ opacity: 0, scale: 0.95, y: 10, x: -20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 10, x: -20 }}
-                        className="absolute top-14 right-0 z-50 bg-surface border border-surface-hover rounded-2xl shadow-2xl overflow-hidden w-[400px] max-h-[80vh] flex flex-col"
-                      >
-                        <Settings onClose={() => setIsSettingsOpen(false)} />
-                      </motion.div>
-                    </>
-                  )}
-                </AnimatePresence>
-              </div>
             </div>
           </header>
 
