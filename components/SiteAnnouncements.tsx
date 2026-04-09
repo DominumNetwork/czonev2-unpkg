@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { db, OperationType, handleFirestoreError } from '../firebase';
+import { db, OperationType, handleFirestoreError, isQuotaExceeded } from '../firebase';
 import { collection, query, where, getDocs, limit, onSnapshot } from 'firebase/firestore';
 import { Megaphone, X } from 'lucide-react';
 
@@ -15,6 +15,8 @@ export const SiteAnnouncements = () => {
   }, []);
 
   useEffect(() => {
+    if (isQuotaExceeded) return;
+
     const q = query(
       collection(db, 'site_announcements'), 
       where('active', '==', true)

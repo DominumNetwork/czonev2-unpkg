@@ -32,7 +32,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, showCloseButton = true }
       console.log(`${mode} successful, closing modal.`);
       onClose();
     } catch (err: any) {
-      console.error(`${mode} error:`, err);
+      if (!String(err).includes('Quota limit exceeded') && !String(err).includes('Quota exceeded')) {
+        console.error(`${mode} error:`, err);
+      }
       setError(err.message || 'Authentication failed');
     } finally {
       setIsLoading(false);
@@ -48,7 +50,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, showCloseButton = true }
       console.log("Google Login successful, closing modal.");
       onClose();
     } catch (err: any) {
-      console.error("Google Login error:", err);
+      if (!String(err).includes('Quota limit exceeded') && !String(err).includes('Quota exceeded')) {
+        console.error("Google Login error:", err);
+      }
       setError(err.message || 'Google login failed');
     } finally {
       setIsLoading(false);

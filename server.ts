@@ -8,6 +8,8 @@ import { fileURLToPath } from 'url';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
+import YTMusic from 'ytmusic-api';
+import yt from 'yt-stream';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -176,6 +178,44 @@ app.get('/api/music/monochrome/track/:id', async (req, res) => {
   } catch (error) {
     console.error('Track proxy error:', error);
     res.status(500).json({ error: 'Failed to fetch track details' });
+  }
+});
+
+// New YTMusic Search and Stream Routes
+const ytmusic = new YTMusic();
+let ytmusicInitialized = false;
+
+async function getYTMusic() {
+  if (!ytmusicInitialized) {
+    await ytmusic.initialize();
+    ytmusicInitialized = true;
+  }
+  return ytmusic;
+}
+
+app.get('/api/music/search', async (req, res) => {
+  try {
+    const query = req.query.q as string;
+    if (!query) return res.status(400).json({ error: 'Query required' });
+    const ytm = await getYTMusic();
+    const results = await ytm.search(query);
+    res.json(results);
+  } catch (error) {
+    console.error('YTMusic search error:', error);
+    res.status(500).json({ error: 'Failed to search music' });
+  }
+});
+
+app.get('/api/music/stream', async (req, res) => {
+  try {
+    const videoId = req.query.id as string;
+    if (!videoId) return res.status(400).json({ error: 'Video ID required' });
+    // @ts-ignore
+    const stream = await yt.stream(videoId);
+    res.json({ url: stream.url });
+  } catch (error) {
+    console.error('YT stream error:', error);
+    res.status(500).json({ error: 'Failed to get stream' });
   }
 });
 

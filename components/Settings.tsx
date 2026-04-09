@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { VenetianMask, Palette, ChevronDown, Edit2, X, ExternalLink, Globe, User, Trash2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
-import { auth, db, handleFirestoreError, OperationType } from '../firebase';
+import { auth, db, handleFirestoreError, OperationType, isQuotaExceeded } from '../firebase';
 import { doc, updateDoc, deleteDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { deleteUser, updateProfile } from 'firebase/auth';
 import { RefreshCw, CheckCircle2 } from 'lucide-react';
@@ -389,14 +389,14 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      if (!auth.currentUser) return;
+      if (!auth.currentUser || isQuotaExceeded) return;
       try {
         const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
         if (userDoc.exists()) {
           setLastUsernameChange(userDoc.data().lastUsernameChange);
         }
       } catch (err) {
-        console.error("Error fetching user data:", err);
+        handleFirestoreError(err, OperationType.GET, `users/${auth.currentUser?.uid}`);
       }
     };
     fetchUserData();
@@ -424,6 +424,12 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     setUsernameError(null);
     setUsernameSuccess(false);
 
+    if (isQuotaExceeded) {
+      setUsernameError("Database quota exceeded. Please try again later.");
+      setIsUpdatingUsername(false);
+      return;
+    }
+
     try {
       // 1. Update Auth Profile
       await updateProfile(auth.currentUser, { displayName: newDisplayName });
@@ -439,7 +445,9 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
       setUsernameSuccess(true);
       setTimeout(() => setUsernameSuccess(false), 3000);
     } catch (err: any) {
-      console.error("Error updating username:", err);
+      if (!String(err).includes('Quota limit exceeded') && !String(err).includes('Quota exceeded')) {
+        console.error("Error updating username:", err);
+      }
       setUsernameError("Failed to update username. Please try again.");
       handleFirestoreError(err, OperationType.UPDATE, `users/${auth.currentUser?.uid}`);
     } finally {
@@ -453,6 +461,12 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
 
     setIsDeleting(true);
     setDeleteError(null);
+
+    if (isQuotaExceeded) {
+      setDeleteError("Database quota exceeded. Please try again later.");
+      setIsDeleting(false);
+      return;
+    }
 
     try {
       const user = auth.currentUser;
@@ -468,7 +482,9 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
       onClose();
       window.location.href = '/';
     } catch (err: any) {
-      console.error("Error deleting account:", err);
+      if (!String(err).includes('Quota limit exceeded') && !String(err).includes('Quota exceeded')) {
+        console.error("Error deleting account:", err);
+      }
       if (err.code === 'auth/requires-recent-login') {
         setDeleteError("This action requires a recent login. Please log out and log back in, then try again.");
       } else {
@@ -506,7 +522,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     localStorage.setItem('custom_themes', JSON.stringify(customThemes));
     
     // Sync to Firebase if logged in
-    if (auth.currentUser) {
+    if (auth.currentUser && !isQuotaExceeded) {
       updateDoc(doc(db, 'users', auth.currentUser.uid), {
         theme: currentThemeId,
         customThemes: JSON.stringify(customThemes)

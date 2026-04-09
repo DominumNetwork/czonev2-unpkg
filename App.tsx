@@ -11,7 +11,7 @@ import { GamesHub } from './components/GamesHub';
 import { Category, LibraryItem, StaffMember, Game, FavoriteItem } from './types';
 import { MOVIES_DATA, ANIME_DATA, MANGA_DATA, TV_DATA, STAFF_DATA, PARTNERS_DATA, PROXIES_DATA } from './constants';
 import { useLanguage } from './context/LanguageContext';
-import { auth, logout, db, handleFirestoreError, OperationType } from './firebase';
+import { auth, logout, db, handleFirestoreError, OperationType, isQuotaExceeded } from './firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, updateDoc, onSnapshot, collection, query, orderBy, limit, where, getDocs, deleteDoc } from 'firebase/firestore';
 import ChatRoom from './components/ChatRoom';
@@ -142,15 +142,12 @@ const getInitialCategory = (): Category => {
 
 const App: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<Category>(getInitialCategory);
-  const [isPageLoading, setIsPageLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [proxySearch, setProxySearch] = useState('');
   const [customLogo, setCustomLogo] = useState<string>(DEFAULT_LOGO);
 
   useEffect(() => {
-    setIsPageLoading(true);
     const timer = setTimeout(() => {
-      setIsPageLoading(false);
     }, 800);
     return () => clearTimeout(timer);
   }, [activeCategory]);
@@ -230,13 +227,12 @@ const App: React.FC = () => {
   }, [user, isAuthReady]);
 
   useEffect(() => {
-    if (!user || !isAuthReady) return;
+    if (!user || !isAuthReady || isQuotaExceeded) return;
 
     const q = query(collection(db, 'uploads'), orderBy('createdAt', 'desc'), limit(50));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setUploads(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (error) => {
-      console.error("Error listening to uploads:", error);
       handleFirestoreError(error, OperationType.GET, 'uploads');
     });
     return () => unsubscribe();
@@ -247,8 +243,10 @@ const App: React.FC = () => {
       const customEvent = e as CustomEvent;
       const errInfo = customEvent.detail;
       if (errInfo && errInfo.error && (errInfo.error.includes('Quota limit exceeded') || errInfo.error.includes('Quota exceeded'))) {
-        console.error("Firebase Quota Exceeded. The free daily read/write limit for this database has been reached. The quota will reset tomorrow.");
-        setQuotaError("Firebase Quota Exceeded. The free daily read/write limit for this database has been reached. The quota will reset tomorrow.");
+        if (!quotaError) {
+          console.warn("Firebase Quota Exceeded. The free daily read/write limit for this database has been reached. The quota will reset tomorrow.");
+          setQuotaError("Firebase Quota Exceeded. The free daily read/write limit for this database has been reached. The quota will reset tomorrow.");
+        }
       }
     };
 
@@ -268,8 +266,12 @@ const App: React.FC = () => {
       console.log("Auth state changed:", currentUser?.email);
       setUser(currentUser);
       const superAdminUid = 'HfjrcUIslZPCvNI3fxiQJVK1ebB3';
+      const defaultAdminEmail = 'darkfn1234567890@gmail.com';
       const isSuperAdminUser = currentUser?.uid === superAdminUid;
+      const isDefaultAdmin = currentUser?.email === defaultAdminEmail && currentUser?.emailVerified;
+      
       setIsSuperAdmin(isSuperAdminUser);
+      if (isSuperAdminUser || isDefaultAdmin) setIsAdmin(true);
       // Admin status will be updated by the database listener
       setIsAuthReady(true);
       if (currentUser) {
@@ -284,7 +286,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!user || !isAuthReady) return;
+    if (!user || !isAuthReady || isQuotaExceeded) return;
 
     const userDocRef = doc(db, 'users', user.uid);
     const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
@@ -329,11 +331,13 @@ const App: React.FC = () => {
         
         // Update admin status based on role in database and super admin UID
         const superAdminUid = 'HfjrcUIslZPCvNI3fxiQJVK1ebB3';
+        const defaultAdminEmail = 'darkfn1234567890@gmail.com';
         const isSuperAdminUser = user.uid === superAdminUid;
+        const isDefaultAdmin = user.email === defaultAdminEmail && user.emailVerified;
         const isAdminRole = ['admin', 'co-owner', 'owner'].includes(data.role || '');
         
         setIsSuperAdmin(isSuperAdminUser);
-        setIsAdmin(isSuperAdminUser || isAdminRole);
+        setIsAdmin(isSuperAdminUser || isDefaultAdmin || isAdminRole);
         setIsBanned(data.banned === true && !isSuperAdminUser);
       }
     }, (err) => {
@@ -432,7 +436,7 @@ const App: React.FC = () => {
     localStorage.setItem('chillzone_custom_logo', newLogoUrl);
     
     // Sync to Firebase if logged in
-    if (user) {
+    if (user && !isQuotaExceeded) {
       updateDoc(doc(db, 'users', user.uid), {
         customLogo: newLogoUrl
       }).catch(err => {
@@ -464,7 +468,7 @@ const App: React.FC = () => {
       localStorage.setItem('chillzone_favorites', JSON.stringify(newFavorites));
       
       // Sync to Firebase if logged in
-      if (user) {
+      if (user && !isQuotaExceeded) {
         updateDoc(doc(db, 'users', user.uid), {
           favorites: newFavorites
         }).catch(err => {
@@ -729,20 +733,7 @@ const App: React.FC = () => {
 
           <div id="content-area" className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-10 custom-scrollbar overscroll-contain">
             <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-              {isPageLoading ? (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex flex-col items-center justify-center py-40 text-center"
-                >
-                  <Loader2 size={64} className="mb-6 text-accent animate-spin" />
-                  <h2 className="text-3xl font-black uppercase italic tracking-widest italic mb-2 text-white animate-pulse">Loading Content...</h2>
-                  <p className="text-text-secondary font-medium uppercase tracking-[0.2em] text-[10px]">Please wait while we fetch the latest data</p>
-                </motion.div>
-              ) : (
-                <>
-                  {/* Hero Section */}
+              {/* Hero Section */}
                   {activeCategory !== 'music' && (
                     <motion.section 
                       initial={{ opacity: 0, y: -20 }}
@@ -1108,8 +1099,6 @@ const App: React.FC = () => {
                     {activeCategory === 'partners' && <Partners />}
                   </motion.div>
                 </AnimatePresence>
-              )}
-                </>
               )}
             </div>
           </div>

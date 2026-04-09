@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Trash2, Edit2, Save, AlertCircle, CheckCircle2, ShieldCheck, Users, Megaphone, Activity, Send, Check, Ban, UserCheck, Upload, Loader2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { db, auth, OperationType, handleFirestoreError } from '../firebase';
+import { db, auth, OperationType, handleFirestoreError, isQuotaExceeded } from '../firebase';
 import { collection, addDoc, query, orderBy, deleteDoc, doc, updateDoc, serverTimestamp, Timestamp, setDoc, where, getDocs, limit, onSnapshot } from 'firebase/firestore';
 
 interface User {
@@ -67,6 +67,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
       setError('Please fill in all fields.');
       return;
     }
+    if (isQuotaExceeded) {
+      setError('Database quota exceeded. Cannot upload content.');
+      return;
+    }
     try {
       await addDoc(collection(db, 'uploads'), {
         title: uploadTitle,
@@ -103,7 +107,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
   const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'co-owner' | 'owner' | 'user' | 'donator' | 'tester'>('all');
 
   useEffect(() => {
-    if (activeTab === 'analytics' || activeTab === 'upload') return;
+    if (activeTab === 'analytics' || activeTab === 'upload' || isQuotaExceeded) return;
 
     setIsLoading(true);
     let unsubscribe: () => void = () => {};
@@ -165,7 +169,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
         });
       }
     } catch (err) {
-      console.error("Error setting up listeners:", err);
+      if (!String(err).includes('Quota limit exceeded') && !String(err).includes('Quota exceeded')) {
+        console.error("Error setting up listeners:", err);
+      }
       setIsLoading(false);
     }
 
@@ -175,6 +181,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
   const handleAddAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim() || !newContent.trim()) return;
+
+    if (isQuotaExceeded) {
+      setError('Database quota exceeded. Cannot post announcement.');
+      return;
+    }
 
     setIsSubmitting(true);
     setError(null);
@@ -201,6 +212,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
   };
 
   const handleDeleteAnnouncement = async (id: string) => {
+    if (isQuotaExceeded) return;
     try {
       await deleteDoc(doc(db, 'site_announcements', id));
     } catch (err) {
@@ -209,6 +221,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
   };
 
   const toggleAnnouncementStatus = async (id: string, currentStatus: boolean) => {
+    if (isQuotaExceeded) return;
     try {
       await updateDoc(doc(db, 'site_announcements', id), {
         active: !currentStatus
@@ -219,6 +232,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
   };
 
   const handleMarkSuggestionReviewed = async (id: string) => {
+    if (isQuotaExceeded) return;
     try {
       await updateDoc(doc(db, 'suggestions', id), {
         status: 'reviewed'
@@ -229,6 +243,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
   };
 
   const handleDeleteSuggestion = async (id: string) => {
+    if (isQuotaExceeded) return;
     try {
       await deleteDoc(doc(db, 'suggestions', id));
     } catch (err) {
@@ -238,6 +253,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
 
   const handleRemoveAllAdmins = async () => {
     if (!window.confirm('Are you sure you want to remove all other admins and reset all user roles to "user"? This cannot be undone.')) return;
+    if (isQuotaExceeded) {
+      setError('Database quota exceeded.');
+      return;
+    }
     try {
       console.log('Starting admin removal...');
       // 1. Clear allowed_admins
@@ -269,13 +288,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
       setSuccess('All other admins removed and roles reset successfully!');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      console.error('Error removing admins:', err);
+      if (!String(err).includes('Quota limit exceeded') && !String(err).includes('Quota exceeded')) {
+        console.error('Error removing admins:', err);
+      }
       setError('Failed to remove admins.');
       handleFirestoreError(err, OperationType.UPDATE, 'users/allowed_admins');
     }
   };
 
   const handleUpdateUserRole = async (uid: string, newRole: 'admin' | 'co-owner' | 'owner' | 'user' | 'donator' | 'tester') => {
+    if (isQuotaExceeded) return;
     // Optimistic update
     setUsers(prev => prev.map(u => u.uid === uid ? { ...u, role: newRole } : u));
     
@@ -293,6 +315,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
   };
 
   const handleToggleBan = async (uid: string, currentBanned: boolean) => {
+    if (isQuotaExceeded) return;
     // Optimistic update
     setUsers(prev => prev.map(u => u.uid === uid ? { ...u, banned: !currentBanned } : u));
     
