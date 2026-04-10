@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { auth } from '../firebase';
 import EmojiPicker, { Theme as EmojiTheme } from 'emoji-picker-react';
+import axios from 'axios';
 import { Send, Trash2, Edit2, Check, X, ShieldCheck, Smile, DollarSign, MessageSquare, AlertCircle, Zap, Ban, Loader2, Wifi, WifiOff } from 'lucide-react';
 
 interface ChatRoomProps {
@@ -24,9 +25,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat', isAdmin = 
   const [replyTo, setReplyTo] = useState<{ id: string, text: string, displayName: string } | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
-  const [isConnected, setIsConnected] = useState(false);
   
-  const socketRef = useRef<WebSocket | null>(null);
   const isAtBottomRef = useRef(true);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
@@ -38,70 +37,22 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat', isAdmin = 
     }
   };
 
+  const fetchMessages = async () => {
+    try {
+      const response = await axios.get('/api/chat/messages');
+      setMessages(response.data);
+      setIsLoading(false);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch messages:', err);
+      setError('Connection error. Retrying...');
+    }
+  };
+
   useEffect(() => {
-    const connectWebSocket = () => {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
-      
-      console.log('Connecting to WebSocket:', wsUrl);
-      const ws = new WebSocket(wsUrl);
-      socketRef.current = ws;
-
-      ws.onopen = () => {
-        console.log('WebSocket Connected');
-        setIsConnected(true);
-        setIsLoading(false);
-        setError(null);
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'history') {
-            // Ensure history only contains unique IDs
-            const uniqueHistory = data.messages.reduce((acc: any[], current: any) => {
-              const x = acc.find(item => item.id === current.id);
-              if (!x) {
-                return acc.concat([current]);
-              } else {
-                return acc;
-              }
-            }, []);
-            setMessages(uniqueHistory);
-          } else if (data.type === 'message') {
-            setMessages(prev => {
-              // Prevent duplicate messages by checking ID
-              if (data.id && prev.some(m => m.id === data.id)) {
-                return prev;
-              }
-              return [...prev, data];
-            });
-          }
-        } catch (err) {
-          console.error('Failed to parse WebSocket message:', err);
-        }
-      };
-
-      ws.onclose = () => {
-        console.log('WebSocket Disconnected');
-        setIsConnected(false);
-        // Attempt to reconnect after 3 seconds
-        setTimeout(connectWebSocket, 3000);
-      };
-
-      ws.onerror = (err) => {
-        console.error('WebSocket Error:', err);
-        setError('Connection error. Retrying...');
-      };
-    };
-
-    connectWebSocket();
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.close();
-      }
-    };
+    fetchMessages();
+    const interval = setInterval(fetchMessages, 3000); // Poll every 3 seconds
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -127,9 +78,9 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat', isAdmin = 
     }
   }, [cooldownRemaining]);
 
-  const sendMessage = (e: React.FormEvent) => {
+  const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !auth.currentUser || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+    if (!newMessage.trim() || !auth.currentUser) return;
 
     if (!isAdmin && !isSuperAdmin && cooldownRemaining > 0) {
       setError(`Please wait ${cooldownRemaining}s before sending another message.`);
@@ -157,15 +108,21 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat', isAdmin = 
       replyTo: replyTo ? { id: replyTo.id, text: replyTo.text, displayName: replyTo.displayName } : null,
     };
 
-    socketRef.current.send(JSON.stringify(messageData));
-    
-    if (!isAdmin && !isSuperAdmin) {
-      setCooldownRemaining(3);
-    }
+    try {
+      await axios.post('/api/chat/messages', messageData);
+      
+      if (!isAdmin && !isSuperAdmin) {
+        setCooldownRemaining(3);
+      }
 
-    setNewMessage('');
-    setReplyTo(null);
-    isAtBottomRef.current = true;
+      setNewMessage('');
+      setReplyTo(null);
+      isAtBottomRef.current = true;
+      fetchMessages(); // Immediate refresh after sending
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      setError('Failed to send message.');
+    }
   };
 
   const startEdit = (id: string, text: string) => {
@@ -174,8 +131,6 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat', isAdmin = 
   };
 
   const saveEdit = (id: string) => {
-    // Note: In this simple WebSocket implementation, we don't have a backend to handle edits/deletes globally
-    // unless we add more event types. For now, we'll just close the edit UI.
     setEditingMessageId(null);
     setEditValue('');
   };
@@ -196,13 +151,9 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat', isAdmin = 
               <h2 className="text-lg font-black italic uppercase tracking-tighter text-white">
                 {collectionName === 'admin_chat' ? 'Staff Lounge' : 'Public Chat'}
               </h2>
-              {isConnected ? (
-                <Wifi size={14} className="text-green-500" />
-              ) : (
-                <WifiOff size={14} className="text-red-500 animate-pulse" />
-              )}
+              <Wifi size={14} className="text-green-500" />
             </div>
-            <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest">Live Community Discussion (WebSocket)</p>
+            <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest">Live Community Discussion (HTTP Polling)</p>
           </div>
         </div>
         <AnimatePresence>
@@ -310,9 +261,8 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat', isAdmin = 
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder={isConnected ? "Type a message..." : "Connecting..."}
-            disabled={!isConnected}
-            className="flex-1 bg-white/5 border border-white/5 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-accent disabled:opacity-50"
+            placeholder="Type a message..."
+            className="flex-1 bg-white/5 border border-white/5 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-accent"
           />
           <button 
             type="button"
@@ -348,7 +298,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat', isAdmin = 
         </div>
         <button 
           type="submit" 
-          disabled={!isConnected || (!isAdmin && !isSuperAdmin && cooldownRemaining > 0)}
+          disabled={!isAdmin && !isSuperAdmin && cooldownRemaining > 0}
           className="p-2 bg-accent rounded-xl text-white hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[40px]"
         >
           {cooldownRemaining > 0 && !isAdmin && !isSuperAdmin ? (

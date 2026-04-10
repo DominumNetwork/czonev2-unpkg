@@ -10,8 +10,6 @@ import * as cheerio from 'cheerio';
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
 import YTMusic from 'ytmusic-api';
 import yt from 'yt-stream';
-import { WebSocketServer, WebSocket } from 'ws';
-import http from 'http';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,6 +22,34 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
+
+// In-memory chat store
+const chatMessages: any[] = [];
+const MAX_CHAT_HISTORY = 100;
+
+app.get('/api/chat/messages', (req, res) => {
+  res.json(chatMessages);
+});
+
+app.post('/api/chat/messages', (req, res) => {
+  const message = req.body;
+  if (!message || !message.text) {
+    return res.status(400).json({ error: 'Invalid message' });
+  }
+
+  const newMessage = {
+    ...message,
+    id: message.id || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    createdAt: message.createdAt || new Date().toISOString()
+  };
+
+  chatMessages.push(newMessage);
+  if (chatMessages.length > MAX_CHAT_HISTORY) {
+    chatMessages.shift();
+  }
+
+  res.status(201).json(newMessage);
+});
 
 // GA4 Proxy Route
 app.get('/api/analytics/data', async (req, res) => {
@@ -186,50 +212,7 @@ async function startServer() {
     });
   }
 
-  const server = http.createServer(app);
-
-  // WebSocket Server Integration
-  const wss = new WebSocketServer({ server, path: '/ws' });
-  const messageHistory: any[] = [];
-  const MAX_HISTORY = 100;
-
-  wss.on('connection', (ws) => {
-    console.log('New chat client connected');
-
-    // Send history to new client
-    if (messageHistory.length > 0) {
-      ws.send(JSON.stringify({ type: 'history', messages: messageHistory }));
-    }
-
-    ws.on('message', (message) => {
-      try {
-        const messageData = JSON.parse(message.toString());
-        console.log('Received message:', messageData);
-        
-        // Add to history
-        messageHistory.push(messageData);
-        if (messageHistory.length > MAX_HISTORY) {
-          messageHistory.shift();
-        }
-
-        // Broadcast to all connected clients
-        const broadcastData = JSON.stringify({ type: 'message', ...messageData });
-        wss.clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(broadcastData);
-          }
-        });
-      } catch (err) {
-        console.error('Failed to parse message:', err);
-      }
-    });
-
-    ws.on('close', () => {
-      console.log('Chat client disconnected');
-    });
-  });
-
-  server.listen(PORT, '0.0.0.0', () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }
