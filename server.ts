@@ -190,7 +190,7 @@ async function startServer() {
   });
 
   // WebSocket Server Integration
-  const wss = new WebSocketServer({ server });
+  const wss = new WebSocketServer({ server, path: '/ws' });
   const messageHistory: any[] = [];
   const MAX_HISTORY = 50;
 
