@@ -53,6 +53,16 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["email", "addedBy", "createdAt"]
+    },
+    "system_status": {
+      "title": "System Status",
+      "description": "Global system status flags.",
+      "type": "object",
+      "properties": {
+        "updating": { "type": "boolean", "description": "Whether the site is currently being updated." },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "updatedBy": { "type": "string" }
+      }
     }
   },
   "firestore": {
@@ -71,6 +81,10 @@
     "/allowed_admins/{docId}": {
       "schema": "allowed_admins",
       "description": "Allowed admin emails."
+    },
+    "/system/status": {
+      "schema": "system_status",
+      "description": "Global system status."
     }
   }
 }

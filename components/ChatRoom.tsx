@@ -45,13 +45,20 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat', isAdmin = 
       const response = await fetch('/api/chat/messages', { signal: controller.signal });
       clearTimeout(timeoutId);
       
+      const text = await response.text();
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}, body: ${text.slice(0, 100)}`);
       }
-      const data = await response.json();
-      console.log('Fetched messages:', data.length);
-      setMessages(data);
-      setError(null);
+      
+      try {
+        const data = JSON.parse(text);
+        console.log('Fetched messages:', data.length);
+        setMessages(data);
+        setError(null);
+      } catch (parseErr) {
+        console.error('Failed to parse messages JSON. Response text:', text);
+        throw new Error('Invalid JSON response from chat API');
+      }
     } catch (err: any) {
       clearTimeout(timeoutId);
       console.error('Failed to fetch messages:', err);
@@ -65,10 +72,16 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ collectionName = 'chat', isAdmin = 
         const healthResponse = await fetch('/api/health', { signal: healthController.signal });
         clearTimeout(hTimeoutId);
         
+        const hText = await healthResponse.text();
         if (healthResponse.ok) {
-          const healthData = await healthResponse.json();
-          console.log('API Health Check Success:', healthData);
-          setError(`Chat API error: ${err.name === 'AbortError' ? 'Timeout' : err.message}. API is UP.`);
+          try {
+            const healthData = JSON.parse(hText);
+            console.log('API Health Check Success:', healthData);
+            setError(`Chat API error: ${err.name === 'AbortError' ? 'Timeout' : err.message}. API is UP.`);
+          } catch (hParseErr) {
+            console.error('Failed to parse health check JSON. Response text:', hText);
+            throw new Error('Invalid JSON response from health API');
+          }
         } else {
           setError(`Server DOWN: HTTP ${healthResponse.status}. Retrying...`);
         }

@@ -156,6 +156,13 @@ service cloud.firestore {
              isValidUrl(data.imageLink);
     }
 
+    function isValidSystemStatus(data) {
+      return data.keys().hasOnly(['updating', 'updatedAt', 'updatedBy']) &&
+             (!('updating' in data) || data.updating is bool) &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp) &&
+             (!('updatedBy' in data) || data.updatedBy is string);
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -224,6 +231,11 @@ service cloud.firestore {
       allow read: if isAuthenticated() && !isBanned();
       allow create, update: if isAdmin() && isValidUpload(request.resource.data) && !isBanned();
       allow delete: if isAdmin() && !isBanned();
+    }
+
+    match /system/status {
+      allow read: if true;
+      allow write: if isAdmin() && isValidSystemStatus(request.resource.data);
     }
   }
 }

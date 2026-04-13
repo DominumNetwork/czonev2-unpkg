@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Trash2, Edit2, Save, AlertCircle, CheckCircle2, ShieldCheck, Users, Megaphone, Activity, Send, Check, Ban, UserCheck, Upload, Loader2 } from 'lucide-react';
+import { X, Plus, Trash2, Edit2, Save, AlertCircle, CheckCircle2, ShieldCheck, Users, Megaphone, Activity, Send, Check, Ban, UserCheck, Upload, Loader2, Settings as SettingsIcon } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { db, auth, OperationType, handleFirestoreError, isQuotaExceeded } from '../firebase';
 import { collection, addDoc, query, orderBy, deleteDoc, doc, updateDoc, serverTimestamp, Timestamp, setDoc, where, getDocs, limit, onSnapshot } from 'firebase/firestore';
@@ -9,7 +9,7 @@ interface User {
   uid: string;
   email: string | null;
   displayName: string | null;
-  role: 'admin' | 'co-owner' | 'owner' | 'user' | 'donator';
+  role: 'admin' | 'co-owner' | 'owner' | 'user' | 'donator' | 'tester';
   banned?: boolean;
   createdAt?: Timestamp;
 }
@@ -99,8 +99,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'announcements' | 'suggestions' | 'users' | 'admins' | 'analytics' | 'appeals' | 'banned' | 'upload'>('announcements');
+  const [activeTab, setActiveTab] = useState<'announcements' | 'suggestions' | 'users' | 'admins' | 'analytics' | 'appeals' | 'banned' | 'upload' | 'system'>('announcements');
   const [isLoading, setIsLoading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [suggestionFilter, setSuggestionFilter] = useState<'all' | 'pending' | 'reviewed'>('all');
   const [appealFilter, setAppealFilter] = useState<'all' | 'pending' | 'approved' | 'denied'>('all');
   const [userSearchQuery, setUserSearchQuery] = useState('');
@@ -165,6 +166,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
           setIsLoading(false);
         }, (err) => {
           handleFirestoreError(err, OperationType.LIST, 'appeals');
+          setIsLoading(false);
+        });
+      } else if (activeTab === 'system') {
+        unsubscribe = onSnapshot(doc(db, 'system', 'status'), (snapshot) => {
+          if (snapshot.exists()) {
+            setIsUpdating(snapshot.data().updating === true);
+          }
+          setIsLoading(false);
+        }, (err) => {
+          handleFirestoreError(err, OperationType.GET, 'system/status');
           setIsLoading(false);
         });
       }
@@ -421,6 +432,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
     }
   };
 
+  const toggleMaintenanceMode = async () => {
+    if (isQuotaExceeded) return;
+    try {
+      await setDoc(doc(db, 'system', 'status'), {
+        updating: !isUpdating,
+        updatedAt: serverTimestamp(),
+        updatedBy: auth.currentUser?.uid
+      }, { merge: true });
+      setSuccess(`Maintenance mode ${!isUpdating ? 'activated' : 'deactivated'}!`);
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError('Failed to toggle maintenance mode.');
+      handleFirestoreError(err, OperationType.UPDATE, 'system/status');
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#0a0a0a] text-white">
       {/* Header */}
@@ -450,6 +477,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
           { id: 'appeals', icon: AlertCircle, label: 'Appeals' },
           { id: 'analytics', icon: Activity, label: 'Analytics' },
           { id: 'upload', icon: Upload, label: 'Upload' },
+          { id: 'system', icon: SettingsIcon, label: 'System' },
           ...(isSuperAdmin || isAdmin ? [
             { id: 'users', icon: Users, label: 'User Management' },
             { id: 'banned', icon: Ban, label: 'Banned Users' },
@@ -941,6 +969,58 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
                 </div>
               ))
             )}
+          </div>
+        )}
+        {!isLoading && activeTab === 'system' && (
+          <div className="p-6 space-y-8">
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <h3 className="text-xl font-black uppercase italic tracking-tighter text-white">Maintenance Mode</h3>
+                  <p className="text-xs text-neutral-500 font-bold uppercase tracking-widest">Toggle "UPDATING!!!" Overlay</p>
+                </div>
+                <button
+                  onClick={toggleMaintenanceMode}
+                  className={`relative w-16 h-8 rounded-full transition-all duration-500 ${
+                    isUpdating ? 'bg-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.3)]' : 'bg-neutral-800'
+                  }`}
+                >
+                  <motion.div
+                    animate={{ x: isUpdating ? 36 : 4 }}
+                    className="absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg"
+                  />
+                </button>
+              </div>
+              
+              <div className="p-4 bg-accent/5 border border-accent/10 rounded-2xl">
+                <p className="text-xs text-accent/80 leading-relaxed font-medium italic">
+                  Activating this will show a full-screen "UPDATING!!!" message to all users in real-time. 
+                  Use this before pushing updates to GitHub to ensure users know the site is being maintained.
+                </p>
+              </div>
+
+              {isUpdating && (
+                <div className="flex items-center gap-3 text-accent animate-pulse">
+                  <Activity size={16} />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Maintenance Mode Active</span>
+                </div>
+              )}
+            </div>
+
+            <AnimatePresence>
+              {error && (
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-2 text-red-500 text-xs font-bold bg-red-500/10 p-4 rounded-2xl border border-red-500/20">
+                  <AlertCircle size={14} />
+                  {error}
+                </motion.div>
+              )}
+              {success && (
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-2 text-green-500 text-xs font-bold bg-green-500/10 p-4 rounded-2xl border border-green-500/20">
+                  <CheckCircle2 size={14} />
+                  {success}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
       </div>

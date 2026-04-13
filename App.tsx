@@ -20,6 +20,7 @@ import AuthModal from './components/AuthModal';
 import SuggestionModal from './components/SuggestionModal';
 import AppealModal from './components/AppealModal';
 import { SiteAnnouncements } from './components/SiteAnnouncements';
+import { UpdateOverlay } from './components/UpdateOverlay';
 import { Search, X, Film, Sparkles, BookOpen, Tv, SearchX, PlayCircle, Star, Globe, Users, ExternalLink, ShieldAlert, Zap, MessageSquare, Activity, Loader2, Book, AlertTriangle, Settings as SettingsIcon, GitCommit, ChevronDown, LayoutGrid, Gamepad2, ShieldCheck, LogOut, LogIn, Send } from 'lucide-react';
 
 const DEFAULT_LOGO = "https://lh7-rt.googleusercontent.com/sitesz/AClOY7psM7n5cC2oRAQVLVss3LsgYFKWwE-KzTjGQvDYtnnp1f1j-Szl1OH6r1pZTXpsw0t_1es0N4P9E2cBl4Oqs-lOwNJdAt3H5CiGxGZKfBTzaYq_ybiI1qd2dWXWu_GRWMqLDD_3BL9tkNhJBNJhjBuuQWyvP1B19h6v0fblyHBwfxs-94c7?key=IannGxLsV9P5UfJ0NHPqqQ";
@@ -558,6 +559,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-bg text-text-primary">
+      <UpdateOverlay />
       <ScrambleEffect />
       <SiteAnnouncements />
       <div id="app" className="fixed inset-0 flex flex-col overflow-hidden bg-bg text-text-primary">
@@ -1285,7 +1287,7 @@ const App: React.FC = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsAdminOpen(false)}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 md:p-8"
+            className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 md:p-8"
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}

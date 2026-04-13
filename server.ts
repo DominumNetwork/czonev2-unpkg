@@ -19,26 +19,45 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
+// In-memory chat store
+const chatMessages: any[] = [];
+const MAX_CHAT_HISTORY = 100;
+
+const MONOCHROME_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+  'Accept': 'application/json, text/plain, */*',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'Cache-Control': 'no-cache',
+  'Pragma': 'no-cache',
+  'Referer': 'https://monochrome.tf/'
+};
+
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
+
+// Request logger
+app.use((req, res, next) => {
+  const isAsset = req.url.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|otf|map|tsx|ts|jsx|json)$/);
+  const isApi = req.url.startsWith('/api');
+  
+  if (isApi || (!isAsset && req.url !== '/')) {
+    console.log(`[Server] ${new Date().toISOString()} ${req.method} ${req.url}`);
+  }
+  next();
+});
 
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
-// In-memory chat store
-const chatMessages: any[] = [];
-const MAX_CHAT_HISTORY = 100;
-
+// API routes
 app.get('/api/chat/messages', (req, res) => {
-  console.log('[API] GET /api/chat/messages');
   res.json(chatMessages);
 });
 
 app.post('/api/chat/messages', (req, res) => {
-  console.log('[API] POST /api/chat/messages', req.body);
   const message = req.body;
   if (!message || !message.text) {
     return res.status(400).json({ error: 'Invalid message' });
@@ -60,15 +79,21 @@ app.post('/api/chat/messages', (req, res) => {
 
 // GA4 Proxy Route
 app.get('/api/analytics/data', async (req, res) => {
-  console.log('Received request for /api/analytics/data');
   try {
-    const propertyId = '527976762'; // From the URL
+    const propertyId = '527976762';
     if (!process.env.GA4_SERVICE_ACCOUNT_JSON) {
-        console.error('GA4 credentials not configured');
         return res.status(500).json({ error: 'GA4 credentials not configured' });
     }
+    
+    let credentials;
+    try {
+      credentials = JSON.parse(process.env.GA4_SERVICE_ACCOUNT_JSON);
+    } catch (e) {
+      return res.status(500).json({ error: 'Invalid GA4 credentials format' });
+    }
+
     const analyticsDataClient = new BetaAnalyticsDataClient({
-        credentials: JSON.parse(process.env.GA4_SERVICE_ACCOUNT_JSON)
+        credentials
     });
 
     const [response] = await analyticsDataClient.runReport({
@@ -86,17 +111,7 @@ app.get('/api/analytics/data', async (req, res) => {
 });
 
 // Music Proxy Routes
-const MONOCHROME_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-  'Accept': 'application/json, text/plain, */*',
-  'Accept-Language': 'en-US,en;q=0.9',
-  'Cache-Control': 'no-cache',
-  'Pragma': 'no-cache',
-  'Referer': 'https://monochrome.tf/'
-};
-
 app.get('/api/music/monochrome/search', async (req, res) => {
-  console.log(`[API] Music search request received: "${req.query.s}"`);
   try {
     const query = req.query.s as string;
     if (!query) return res.status(400).json({ error: 'Query required' });
@@ -113,7 +128,6 @@ app.get('/api/music/monochrome/search', async (req, res) => {
 
     for (const url of monochromeMirrors) {
       try {
-        console.log(`Trying Monochrome mirror: ${url}`);
         const response = await axios.get(url, { 
           headers: MONOCHROME_HEADERS,
           timeout: 5000,
@@ -122,12 +136,10 @@ app.get('/api/music/monochrome/search', async (req, res) => {
 
         const contentType = response.headers['content-type'] || '';
         if (contentType.includes('application/json')) {
-          console.log('Monochrome search success');
           return res.json(response.data);
         }
       } catch (e: any) {
         lastError = e;
-        console.debug(`Monochrome mirror attempt failed: ${url}. Error: ${e.message}`);
       }
     }
 
@@ -158,7 +170,6 @@ app.get('/api/music/monochrome/track/:id', async (req, res) => {
 
     for (const url of monochromeTrackMirrors) {
       try {
-        console.log(`Trying Monochrome track mirror: ${url}`);
         const response = await axios.get(url, { 
           headers: MONOCHROME_HEADERS,
           timeout: 5000,
@@ -167,11 +178,10 @@ app.get('/api/music/monochrome/track/:id', async (req, res) => {
         
         const contentType = response.headers['content-type'] || '';
         if (contentType.includes('application/json')) {
-          console.log('Monochrome track success');
           return res.json(response.data);
         }
       } catch (e: any) {
-        console.debug(`Monochrome track mirror attempt failed: ${url}. Error: ${e.message}`);
+        // ignore
       }
     }
 
@@ -182,7 +192,12 @@ app.get('/api/music/monochrome/track/:id', async (req, res) => {
   }
 });
 
-// Session configuration for iframe compatibility
+// API 404 handler
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'API route not found', path: req.url });
+});
+
+// Session configuration
 app.use(session({
   secret: process.env.SESSION_SECRET || 'secret-key',
   resave: false,
@@ -191,13 +206,9 @@ app.use(session({
     secure: true,
     sameSite: 'none',
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000
   }
 }));
-
-
-// Web Proxy Route removed
-
 
 async function startServer() {
   const isProd = process.env.NODE_ENV === 'production';
@@ -211,9 +222,7 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    // In production, serve static files from dist
     app.use(express.static('dist'));
-    // Catch-all for SPA in production
     app.get('*all', (req, res) => {
       res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
     });
@@ -221,6 +230,15 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
+  });
+
+  // Global error handler
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('[Server Error]', err);
+    res.status(500).json({ 
+      error: 'Internal Server Error', 
+      message: err.message
+    });
   });
 }
 

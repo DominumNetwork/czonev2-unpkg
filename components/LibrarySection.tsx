@@ -2,7 +2,7 @@ import React from 'react';
 import { LibraryItem } from '../types';
 import ItemCard from './ItemCard';
 import { SearchX } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
 
 interface LibrarySectionProps {
@@ -14,7 +14,7 @@ interface LibrarySectionProps {
   showSearch?: boolean;
 }
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -24,7 +24,7 @@ const containerVariants = {
   }
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 10 },
   show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } }
 };
