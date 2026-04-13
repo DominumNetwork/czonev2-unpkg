@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Trash2, Edit2, Save, AlertCircle, CheckCircle2, ShieldCheck, Users, Megaphone, Activity, Send, Check, Ban, UserCheck, Upload, Loader2, Settings as SettingsIcon } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { db, auth, OperationType, handleFirestoreError, isQuotaExceeded } from '../firebase';
-import { collection, addDoc, query, orderBy, deleteDoc, doc, updateDoc, serverTimestamp, Timestamp, setDoc, where, getDocs, limit, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, deleteDoc, doc, updateDoc, serverTimestamp, Timestamp, setDoc, where, getDocs, getDoc, limit, onSnapshot } from 'firebase/firestore';
 
 interface User {
   uid: string;
@@ -97,6 +97,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
   const [newContent, setNewContent] = useState('');
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isForceAdding, setIsForceAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'announcements' | 'suggestions' | 'users' | 'admins' | 'analytics' | 'appeals' | 'banned' | 'upload' | 'system'>('announcements');
@@ -105,7 +106,116 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
   const [suggestionFilter, setSuggestionFilter] = useState<'all' | 'pending' | 'reviewed'>('all');
   const [appealFilter, setAppealFilter] = useState<'all' | 'pending' | 'approved' | 'denied'>('all');
   const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'co-owner' | 'owner' | 'user' | 'donator' | 'tester'>('all');
+  const [adminSearchQuery, setAdminSearchQuery] = useState('');
+
+  const handleForceAddUser = async () => {
+    if (!userSearchQuery.trim() || isForceAdding || isQuotaExceeded) return;
+    const email = userSearchQuery.trim().toLowerCase();
+    if (!email.includes('@')) {
+      setError('Please enter a valid email to force-add.');
+      return;
+    }
+    
+    setIsForceAdding(true);
+    try {
+      // Generate a temporary UID or use email as ID if we don't have one
+      // In Firebase, we usually need the actual UID from Auth, but we can create a placeholder
+      // document in the 'users' collection using a hash of the email or just a random ID.
+      // However, it's better to use a random ID and store the email.
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', email));
+      const snap = await getDocs(q);
+      
+      if (!snap.empty) {
+        setSuccess('User already exists in database.');
+        setTimeout(() => setSuccess(null), 3000);
+        return;
+      }
+
+      const newDoc = await addDoc(usersRef, {
+        email: email,
+        role: 'user',
+        displayName: email.split('@')[0],
+        createdAt: serverTimestamp(),
+        isPlaceholder: true // Mark as manually added
+      });
+
+      setSuccess(`Created placeholder record for ${email}`);
+      handleSearchUser(); // Refresh search
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError('Failed to force-add user.');
+      handleFirestoreError(err, OperationType.CREATE, 'users');
+    } finally {
+      setIsForceAdding(false);
+    }
+  };
+  const handleSearchUser = async () => {
+    if (!userSearchQuery.trim()) return;
+    setIsSearching(true);
+    try {
+      const search = userSearchQuery.trim();
+      const searchLower = search.toLowerCase();
+      const usersRef = collection(db, 'users');
+      
+      // Collect unique found documents
+      const foundDocsMap = new Map<string, any>();
+
+      // 1. Try searching by email (exact case)
+      const qEmailExact = query(usersRef, where('email', '==', search));
+      const emailSnapshotExact = await getDocs(qEmailExact);
+      emailSnapshotExact.docs.forEach(d => foundDocsMap.set(d.id, d.data()));
+      
+      // 2. Try searching by email (lowercase) if different
+      if (search !== searchLower) {
+        const qEmailLower = query(usersRef, where('email', '==', searchLower));
+        const emailSnapshotLower = await getDocs(qEmailLower);
+        emailSnapshotLower.docs.forEach(d => foundDocsMap.set(d.id, d.data()));
+      }
+      
+      // 3. Try searching by displayName (exact case)
+      const qNameExact = query(usersRef, where('displayName', '==', search));
+      const nameSnapshotExact = await getDocs(qNameExact);
+      nameSnapshotExact.docs.forEach(d => foundDocsMap.set(d.id, d.data()));
+
+      // 4. Try searching by UID
+      const docRef = doc(db, 'users', search);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        foundDocsMap.set(docSnap.id, docSnap.data());
+      }
+
+      const foundUsers: User[] = Array.from(foundDocsMap.entries()).map(([uid, data]) => ({
+        uid,
+        role: 'user',
+        ...data
+      })) as User[];
+
+      if (foundUsers.length > 0) {
+        // Add found users to the list if they aren't already there
+        setUsers(prev => {
+          const newUsers = [...prev];
+          foundUsers.forEach(fu => {
+            if (!newUsers.find(u => u.uid === fu.uid)) {
+              newUsers.unshift(fu);
+            }
+          });
+          return newUsers;
+        });
+        setSuccess(`Found ${foundUsers.length} user(s) matching "${userSearchQuery}"`);
+        setTimeout(() => setSuccess(null), 3000);
+      } else {
+        setError(`No user found matching "${userSearchQuery}"`);
+        setTimeout(() => setError(null), 3000);
+      }
+    } catch (err) {
+      handleFirestoreError(err, OperationType.GET, 'users');
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   useEffect(() => {
     if (activeTab === 'analytics' || activeTab === 'upload' || isQuotaExceeded) return;
@@ -145,14 +255,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
           setIsLoading(false);
         });
       } else if (activeTab === 'users' || activeTab === 'banned') {
-        const q = query(collection(db, 'users'), limit(5000));
+        const q = query(collection(db, 'users'), limit(10000));
         unsubscribe = onSnapshot(q, (snapshot) => {
           console.log(`[AdminDashboard] Users snapshot received: ${snapshot.size} docs`);
-          setUsers(snapshot.docs.map(doc => ({ 
-            uid: doc.id, 
-            role: 'user', // Default role
-            ...doc.data() 
-          })) as User[]);
+          const fetchedUsers = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return { 
+              uid: doc.id, 
+              role: 'user', // Default role
+              ...data 
+            };
+          }) as User[];
+          
+          if (fetchedUsers.length > 0) {
+            console.log(`[AdminDashboard] Sample fetched user:`, fetchedUsers[0].email || fetchedUsers[0].uid);
+          }
+          
+          setUsers(fetchedUsers);
           setIsLoading(false);
         }, (err) => {
           handleFirestoreError(err, OperationType.LIST, 'users');
@@ -283,7 +402,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
       const usersRef = collection(db, 'users');
       // Query only users with admin-related roles to save quota
       const adminRoles = ['admin', 'co-owner', 'owner'];
-      const qUsers = query(usersRef, where('role', 'in', adminRoles), limit(1000));
+      const qUsers = query(usersRef, where('role', 'in', adminRoles), limit(10000));
       const userSnapshot = await getDocs(qUsers);
       console.log(`Found ${userSnapshot.docs.length} users with admin roles.`);
       const superAdminUid = 'HfjrcUIslZPCvNI3fxiQJVK1ebB3';
@@ -399,9 +518,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
 
       // Update existing user role if they already have an account
       const usersRef = collection(db, 'users');
-      const querySnapshot = await getDocs(usersRef);
+      const q = query(usersRef, where('email', '==', email));
+      const querySnapshot = await getDocs(q);
       const updatePromises = querySnapshot.docs
-        .filter(docSnap => docSnap.data().email?.toLowerCase() === email)
         .map(docSnap => updateDoc(doc(db, 'users', docSnap.id), { role: 'admin' }));
       await Promise.all(updatePromises);
 
@@ -422,9 +541,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
       
       // Update existing user role back to user
       const usersRef = collection(db, 'users');
-      const querySnapshot = await getDocs(usersRef);
+      const q = query(usersRef, where('email', '==', id.toLowerCase()));
+      const querySnapshot = await getDocs(q);
       const updatePromises = querySnapshot.docs
-        .filter(docSnap => docSnap.data().email?.toLowerCase() === id.toLowerCase())
         .map(docSnap => updateDoc(doc(db, 'users', docSnap.id), { role: 'user' }));
       await Promise.all(updatePromises);
     } catch (err) {
@@ -679,8 +798,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
 
         {(isSuperAdmin || isAdmin) && activeTab === 'users' && (
           <div className="space-y-4">
+            {users.length >= 10000 && (
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-2 text-amber-500 text-[10px] font-bold uppercase tracking-widest">
+                <AlertCircle size={14} />
+                Note: Showing the maximum of 10,000 users allowed by a single Firestore query.
+              </div>
+            )}
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-black uppercase tracking-widest text-neutral-500">User Management</h3>
+              <h3 className="text-sm font-black uppercase tracking-widest text-neutral-500">
+                User Management 
+                <span className="ml-2 text-[10px] bg-white/5 px-2 py-0.5 rounded-full text-neutral-400">
+                  {users.length} Total
+                </span>
+              </h3>
               {isSuperAdmin && (
                 <button onClick={handleRemoveAllAdmins} className="bg-red-500/10 text-red-500 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all">
                   Remove All Admins
@@ -700,34 +830,73 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
                   <option value="donator">Donator</option>
                   <option value="tester">Tester</option>
                 </select>
-                <input
-                  type="text"
-                  placeholder="Search by email or username..."
-                  value={userSearchQuery}
-                  onChange={(e) => setUserSearchQuery(e.target.value)}
-                  className="bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-accent/50 w-64"
-                />
+                <div className="flex gap-2 flex-1 max-w-md">
+                  <input
+                    type="text"
+                    placeholder="Search by email or UID..."
+                    value={userSearchQuery}
+                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearchUser()}
+                    className="bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-accent/50 flex-1"
+                  />
+                  <button 
+                    onClick={handleSearchUser}
+                    disabled={isSearching || !userSearchQuery.trim()}
+                    className="bg-accent text-black px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-accent/80 transition-all disabled:opacity-50"
+                  >
+                    {isSearching ? '...' : 'Search'}
+                  </button>
+                </div>
               </div>
             </div>
             {users.filter(user => {
-              const matchesSearch = !userSearchQuery || user.email?.toLowerCase().includes(userSearchQuery.toLowerCase()) || user.displayName?.toLowerCase().includes(userSearchQuery.toLowerCase());
+              const search = userSearchQuery.toLowerCase();
+              const matchesSearch = !userSearchQuery || 
+                (user.email?.toLowerCase() || '').includes(search) || 
+                (user.displayName?.toLowerCase() || '').includes(search) ||
+                (user.uid.toLowerCase().includes(search));
               const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-              return matchesSearch && matchesRole && !user.banned;
+              const matchesBannedStatus = userSearchQuery ? true : !user.banned;
+              return matchesSearch && matchesRole && matchesBannedStatus;
             }).length === 0 ? (
-              <div className="text-center py-12 text-neutral-600 italic text-sm">No users found.</div>
+              <div className="text-center py-12 space-y-4">
+                <div className="text-neutral-600 italic text-sm">No users found.</div>
+                {userSearchQuery && isSuperAdmin && (
+                  <div className="flex flex-col items-center gap-2">
+                    <p className="text-[10px] text-neutral-500 uppercase tracking-widest">User not in database?</p>
+                    <button 
+                      onClick={handleForceAddUser}
+                      disabled={isForceAdding}
+                      className="bg-white/5 border border-white/10 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-50"
+                    >
+                      {isForceAdding ? 'Creating...' : `Force Add ${userSearchQuery}`}
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               users.filter(user => {
-                const matchesSearch = !userSearchQuery || user.email?.toLowerCase().includes(userSearchQuery.toLowerCase()) || user.displayName?.toLowerCase().includes(userSearchQuery.toLowerCase());
+                const search = userSearchQuery.toLowerCase();
+                const matchesSearch = !userSearchQuery || 
+                  (user.email?.toLowerCase() || '').includes(search) || 
+                  (user.displayName?.toLowerCase() || '').includes(search) ||
+                  (user.uid.toLowerCase().includes(search));
                 const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-                return matchesSearch && matchesRole && !user.banned;
+                const matchesBannedStatus = userSearchQuery ? true : !user.banned;
+                return matchesSearch && matchesRole && matchesBannedStatus;
               }).map((user) => (
                 <div key={user.uid} className="bg-white/5 border border-white/5 rounded-2xl p-5 flex items-center justify-between group hover:border-white/10 transition-all">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${user.banned ? 'bg-red-500/20 text-red-500' : 'bg-accent/20 text-accent'}`}>
                       {user.displayName?.charAt(0) || user.email?.charAt(0) || '?'}
                     </div>
                     <div>
-                      <h4 className="font-bold text-white">{user.displayName || 'Anonymous'}</h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-white">{user.displayName || 'Anonymous'}</h4>
+                        {user.banned && (
+                          <span className="bg-red-500/10 text-red-500 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded">Banned</span>
+                        )}
+                      </div>
                       <p className="text-xs text-neutral-400">{user.email}</p>
                       {user.createdAt && (
                         <p className="text-[10px] text-neutral-500 mt-1">
@@ -801,11 +970,44 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
 
         {(isSuperAdmin || isAdmin) && activeTab === 'banned' && (
           <div className="space-y-4">
-            <h3 className="text-sm font-black uppercase tracking-widest text-neutral-500">Banned Users</h3>
-            {users.filter(user => user.banned).length === 0 ? (
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-black uppercase tracking-widest text-neutral-500">Banned Users</h3>
+              <div className="flex gap-2 flex-1 max-w-md">
+                <input
+                  type="text"
+                  placeholder="Search banned users..."
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearchUser()}
+                  className="bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-accent/50 flex-1"
+                />
+                <button 
+                  onClick={handleSearchUser}
+                  disabled={isSearching || !userSearchQuery.trim()}
+                  className="bg-accent text-black px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-accent/80 transition-all disabled:opacity-50"
+                >
+                  {isSearching ? '...' : 'Search'}
+                </button>
+              </div>
+            </div>
+            {users.filter(user => {
+              const search = userSearchQuery.toLowerCase();
+              const matchesSearch = !userSearchQuery || 
+                (user.email?.toLowerCase() || '').includes(search) || 
+                (user.displayName?.toLowerCase() || '').includes(search) ||
+                (user.uid.toLowerCase().includes(search));
+              return matchesSearch && user.banned;
+            }).length === 0 ? (
               <div className="text-center py-12 text-neutral-600 italic text-sm">No banned users found.</div>
             ) : (
-              users.filter(user => user.banned).map((user) => (
+              users.filter(user => {
+                const search = userSearchQuery.toLowerCase();
+                const matchesSearch = !userSearchQuery || 
+                  (user.email?.toLowerCase() || '').includes(search) || 
+                  (user.displayName?.toLowerCase() || '').includes(search) ||
+                  (user.uid.toLowerCase().includes(search));
+                return matchesSearch && user.banned;
+              }).map((user) => (
                 <div key={user.uid} className="bg-white/5 border border-white/5 rounded-2xl p-5 flex items-center justify-between group hover:border-white/10 transition-all">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 font-bold">
@@ -880,16 +1082,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, isSuperAdmin, 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-black uppercase tracking-widest text-neutral-500">Allowed Admins</h3>
-                <button onClick={handleRemoveAllAdmins} className="bg-red-500/10 text-red-500 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all">
-                  Remove All Admins
-                </button>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Search admins..."
+                    value={adminSearchQuery}
+                    onChange={(e) => setAdminSearchQuery(e.target.value)}
+                    className="bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-accent/50 w-64"
+                  />
+                  <button onClick={handleRemoveAllAdmins} className="bg-red-500/10 text-red-500 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all">
+                    Remove All Admins
+                  </button>
+                </div>
               </div>
-              {allowedAdmins.length === 0 ? (
+              {allowedAdmins.filter(admin => {
+                const search = adminSearchQuery.toLowerCase();
+                return !adminSearchQuery || admin.email.toLowerCase().includes(search);
+              }).length === 0 ? (
                 <div className="text-center py-12 text-neutral-500 text-sm italic">
-                  No additional admins added yet.
+                  {adminSearchQuery ? `No admins found matching "${adminSearchQuery}"` : "No additional admins added yet."}
                 </div>
               ) : (
-                allowedAdmins.map((admin) => (
+                allowedAdmins.filter(admin => {
+                  const search = adminSearchQuery.toLowerCase();
+                  return !adminSearchQuery || admin.email.toLowerCase().includes(search);
+                }).map((admin) => (
                   <div key={admin.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between group hover:bg-white/10 transition-colors">
                     <div>
                       <h4 className="font-bold text-white">{admin.email}</h4>

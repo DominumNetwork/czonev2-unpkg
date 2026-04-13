@@ -13,7 +13,7 @@ import { MOVIES_DATA, ANIME_DATA, MANGA_DATA, TV_DATA, STAFF_DATA, PARTNERS_DATA
 import { useLanguage } from './context/LanguageContext';
 import { auth, logout, db, handleFirestoreError, OperationType, isQuotaExceeded } from './firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, updateDoc, onSnapshot, collection, query, orderBy, limit, where, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, onSnapshot, collection, query, orderBy, limit, where, getDocs, deleteDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import ChatRoom from './components/ChatRoom';
 import AdminDashboard from './components/AdminDashboard';
 import AuthModal from './components/AuthModal';
@@ -263,7 +263,7 @@ const App: React.FC = () => {
   }, [user, isAuthReady, hasOpenedUpdateLog]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       console.log("Auth state changed:", currentUser?.email);
       setUser(currentUser);
       const superAdminUid = 'HfjrcUIslZPCvNI3fxiQJVK1ebB3';
@@ -275,8 +275,30 @@ const App: React.FC = () => {
       if (isSuperAdminUser || isDefaultAdmin) setIsAdmin(true);
       // Admin status will be updated by the database listener
       setIsAuthReady(true);
+      
       if (currentUser) {
         setIsAuthModalOpen(false);
+        
+        // Ensure user document exists
+        if (!isQuotaExceeded) {
+          try {
+            const userDocRef = doc(db, 'users', currentUser.uid);
+            const docSnap = await getDoc(userDocRef);
+            if (!docSnap.exists()) {
+              console.log("[App] Creating missing user document for:", currentUser.email);
+              await setDoc(userDocRef, {
+                uid: currentUser.uid,
+                email: currentUser.email || null,
+                displayName: currentUser.displayName || null,
+                photoURL: currentUser.photoURL || null,
+                role: (currentUser.uid === superAdminUid || isDefaultAdmin) ? 'admin' : 'user',
+                createdAt: serverTimestamp()
+              });
+            }
+          } catch (err) {
+            console.error("[App] Error checking/creating user document:", err);
+          }
+        }
       } else {
         setFavorites([]);
         setIsBanned(false);
