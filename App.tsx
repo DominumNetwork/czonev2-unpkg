@@ -14,14 +14,13 @@ import { useLanguage } from './context/LanguageContext';
 import { auth, logout, db, handleFirestoreError, OperationType, isQuotaExceeded } from './firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, updateDoc, onSnapshot, collection, query, orderBy, limit, where, getDocs, deleteDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import ChatRoom from './components/ChatRoom';
 import AdminDashboard from './components/AdminDashboard';
 import AuthModal from './components/AuthModal';
 import SuggestionModal from './components/SuggestionModal';
 import AppealModal from './components/AppealModal';
 import { SiteAnnouncements } from './components/SiteAnnouncements';
 import { UpdateOverlay } from './components/UpdateOverlay';
-import { Search, X, Film, Sparkles, BookOpen, Tv, SearchX, PlayCircle, Star, Globe, Users, ExternalLink, ShieldAlert, Zap, MessageSquare, Activity, Loader2, Book, AlertTriangle, Settings as SettingsIcon, GitCommit, ChevronDown, LayoutGrid, Gamepad2, ShieldCheck, LogOut, LogIn, Send } from 'lucide-react';
+import { Search, X, Film, Sparkles, BookOpen, Tv, SearchX, PlayCircle, Star, Globe, Users, ExternalLink, ShieldAlert, Zap, Activity, Loader2, Book, AlertTriangle, Settings as SettingsIcon, GitCommit, ChevronDown, LayoutGrid, Gamepad2, ShieldCheck, LogOut, LogIn, Send } from 'lucide-react';
 
 const DEFAULT_LOGO = "https://lh7-rt.googleusercontent.com/sitesz/AClOY7psM7n5cC2oRAQVLVss3LsgYFKWwE-KzTjGQvDYtnnp1f1j-Szl1OH6r1pZTXpsw0t_1es0N4P9E2cBl4Oqs-lOwNJdAt3H5CiGxGZKfBTzaYq_ybiI1qd2dWXWu_GRWMqLDD_3BL9tkNhJBNJhjBuuQWyvP1B19h6v0fblyHBwfxs-94c7?key=IannGxLsV9P5UfJ0NHPqqQ";
 
@@ -133,7 +132,7 @@ const ScrambleEffect: React.FC = () => {
 const getInitialCategory = (): Category => {
   const path = window.location.pathname.substring(1).toLowerCase();
   const normalizedPath = path.replace('-', ' ') as Category;
-  const validCategories: Category[] = ['home', 'movies', 'tv shows', 'anime', 'manga', 'proxies', 'partners', 'dev', 'support', 'donate', 'apps', 'browser', 'settings', 'music', 'games', 'chat', 'admin-chat'];
+  const validCategories: Category[] = ['home', 'movies', 'tv shows', 'anime', 'manga', 'proxies', 'partners', 'dev', 'support', 'donate', 'apps', 'browser', 'settings', 'music', 'games'];
   
   if (validCategories.includes(normalizedPath)) {
     return normalizedPath;
@@ -212,16 +211,13 @@ const App: React.FC = () => {
     const path = window.location.pathname.substring(1).toLowerCase().replace('-', ' ');
     
     if (user) {
-      // If logged in and on root or landing on default 'donate', go to chat
+      // If logged in and on root or landing on default 'donate', go to home or music
       if (path === '' || (path === 'donate' && activeCategory === 'donate')) {
-        // Only redirect if it's the initial load or they just logged in
-        // We check activeCategory === 'donate' to avoid redirecting if they explicitly navigated there
-        // but since this effect only runs on user/isAuthReady change, it's mostly for initial load/login
-        navigate('chat');
+        navigate('music');
       }
     } else {
-      // If not logged in and on root or landing on 'chat', go to donate
-      if (path === '' || path === 'chat') {
+      // If not logged in and on root, go to donate
+      if (path === '') {
         navigate('donate');
         // Automatically open auth modal for guests
         setIsAuthModalOpen(true);
@@ -232,7 +228,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!user || !isAuthReady || isQuotaExceeded) return;
 
-    const q = query(collection(db, 'uploads'), orderBy('createdAt', 'desc'), limit(50));
+    const q = query(collection(db, 'uploads'), orderBy('createdAt', 'desc'), limit(20));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setUploads(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (error) => {
@@ -442,7 +438,7 @@ const App: React.FC = () => {
     const handlePopState = () => {
       const path = window.location.pathname.substring(1).toLowerCase();
       const normalizedPath = path.replace('-', ' ') as Category;
-      const validCategories: Category[] = ['home', 'movies', 'tv shows', 'anime', 'manga', 'proxies', 'partners', 'dev', 'support', 'donate', 'apps', 'browser', 'settings', 'music', 'games', 'chat', 'admin-chat'];
+      const validCategories: Category[] = ['home', 'movies', 'tv shows', 'anime', 'manga', 'proxies', 'partners', 'dev', 'support', 'donate', 'apps', 'browser', 'settings', 'music', 'games'];
       
       if (validCategories.includes(normalizedPath)) {
         setActiveCategory(normalizedPath);
@@ -622,7 +618,6 @@ const App: React.FC = () => {
             logoUrl={customLogo} 
             onLogoChange={handleUpdateLogo}
             isAdmin={isAdmin}
-            isChatCategory={activeCategory === 'chat' || activeCategory === 'admin-chat'}
             isSidebarVisible={isSidebarVisible}
             onSelect={navigate}
             />
@@ -971,111 +966,6 @@ const App: React.FC = () => {
 
                     {activeCategory === 'games' && (
                       <GamesHub />
-                    )}
-                    {activeCategory === 'chat' && (
-                      <div className="mt-20 max-w-[1600px] mx-auto pb-40 px-4 relative">
-                        <motion.div 
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="text-center mb-16"
-                        >
-                          <h1 className="text-7xl font-black italic uppercase tracking-tighter text-white mb-4">Community Chat</h1>
-                          <p className="text-text-secondary max-w-2xl mx-auto font-medium">Connect with other members of ChillZone. Share your thoughts, request content, and hang out with the community.</p>
-                        </motion.div>
-                        
-                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 relative z-10">
-                          <div className="lg:col-span-3">
-                            <ChatRoom isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
-                          </div>
-                          <div className="space-y-6">
-                            <div className="bg-surface border border-white/5 rounded-2xl p-6 shadow-xl">
-                              <h3 className="text-xl font-black italic uppercase tracking-tighter text-white mb-4 flex items-center gap-2">
-                                <ShieldCheck className="text-accent" size={20} />
-                                Chat Rules
-                              </h3>
-                              <ul className="space-y-3 text-sm text-text-secondary font-medium">
-                                <li className="flex gap-2">
-                                  <span className="text-accent font-bold">01.</span>
-                                  Be respectful to all members.
-                                </li>
-                                <li className="flex gap-2">
-                                  <span className="text-accent font-bold">02.</span>
-                                  No spamming or excessive caps.
-                                </li>
-                                <li className="flex gap-2">
-                                  <span className="text-accent font-bold">03.</span>
-                                  No NSFW content or links.
-                                </li>
-                                <li className="flex gap-2">
-                                  <span className="text-accent font-bold">04.</span>
-                                  No self-promotion or advertising.
-                                </li>
-                                <li className="flex gap-2">
-                                  <span className="text-accent font-bold">05.</span>
-                                  Listen to the moderators.
-                                </li>
-                              </ul>
-                            </div>
-                            
-                            <div className="bg-accent/10 border border-accent/20 rounded-2xl p-6 shadow-xl">
-                              <h3 className="text-xl font-black italic uppercase tracking-tighter text-accent mb-2">Support Us</h3>
-                              <p className="text-xs text-text-secondary mb-4">Help keep ChillZone alive by donating. Donators get a special badge in chat!</p>
-                              <button 
-                                onClick={() => navigate('donate')}
-                                className="w-full py-3 bg-accent text-white rounded-xl font-black uppercase tracking-widest text-xs hover:bg-accent/90 transition-colors"
-                              >
-                                Donate Now
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px] pointer-events-none"></div>
-                        <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[120px] pointer-events-none"></div>
-                      </div>
-                    )}
-                    {activeCategory === 'admin-chat' && (
-                      <div className="mt-20 max-w-[1600px] mx-auto pb-40 px-4 relative">
-                        <motion.div 
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="text-center mb-16"
-                        >
-                          <h1 className="text-7xl font-black italic uppercase tracking-tighter text-white mb-4">Staff Lounge</h1>
-                          <p className="text-text-secondary max-w-2xl mx-auto font-medium">Private discussion area for ChillZone staff members. Coordinate updates and manage the site.</p>
-                        </motion.div>
-                        
-                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 relative z-10">
-                          <div className="lg:col-span-3">
-                            <ChatRoom collectionName="admin_chat" isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
-                          </div>
-                          <div className="space-y-6">
-                            <div className="bg-surface border border-white/5 rounded-2xl p-6 shadow-xl">
-                              <h3 className="text-xl font-black italic uppercase tracking-tighter text-white mb-4 flex items-center gap-2">
-                                <ShieldCheck className="text-accent" size={20} />
-                                Staff Protocol
-                              </h3>
-                              <ul className="space-y-3 text-sm text-text-secondary font-medium">
-                                <li className="flex gap-2">
-                                  <span className="text-accent font-bold">01.</span>
-                                  Keep discussions professional.
-                                </li>
-                                <li className="flex gap-2">
-                                  <span className="text-accent font-bold">02.</span>
-                                  Do not share staff info.
-                                </li>
-                                <li className="flex gap-2">
-                                  <span className="text-accent font-bold">03.</span>
-                                  Report all site issues here.
-                                </li>
-                              </ul>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px] pointer-events-none"></div>
-                        <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[120px] pointer-events-none"></div>
-                      </div>
                     )}
                     {activeCategory === 'movies' && (
                       <>

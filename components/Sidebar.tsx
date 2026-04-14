@@ -10,12 +10,11 @@ interface SidebarProps {
   logoUrl: string;
   onLogoChange: (newLogo: string) => void;
   isAdmin?: boolean;
-  isChatCategory?: boolean;
   isSidebarVisible?: boolean;
   onSelect: (id: Category) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeCategory, logoUrl, onLogoChange, isAdmin, isChatCategory, isSidebarVisible, onSelect }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeCategory, logoUrl, onLogoChange, isAdmin, isSidebarVisible, onSelect }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
   const [isHovered, setIsHovered] = useState(false);
@@ -39,8 +38,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, logoUrl, onLogoChange
   const navItems = [
     { id: 'donate' as Category, label: 'Donate', icon: DollarSign },
     { id: 'support' as Category, label: 'Devs', icon: Heart },
-    { id: 'chat' as Category, label: 'Chat', icon: MessageSquare },
-    ...(isAdmin ? [{ id: 'admin-chat' as Category, label: 'Admin Chat', icon: ShieldCheck }] : []),
     { id: 'games' as Category, label: 'Games', icon: Gamepad2 },
     { id: 'movies' as Category, label: 'Movies', icon: Film },
     { id: 'tv shows' as Category, label: 'TV', icon: Tv },
@@ -59,8 +56,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, logoUrl, onLogoChange
     <motion.aside 
       initial={false}
       animate={{ 
-        height: isChatCategory ? (isHovered ? 80 : 10) : (isSidebarVisible ? 80 : 0),
-        opacity: isChatCategory ? (isHovered ? 1 : 0.1) : (isSidebarVisible ? 1 : 0)
+        height: isSidebarVisible ? 80 : 0,
+        opacity: isSidebarVisible ? 1 : 0
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

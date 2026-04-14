@@ -19,9 +19,8 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
-// In-memory chat store
-const chatMessages: any[] = [];
-const MAX_CHAT_HISTORY = 100;
+// In-memory store
+const MAX_HISTORY = 100;
 
 const MONOCHROME_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
@@ -50,31 +49,6 @@ app.use((req, res, next) => {
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
-});
-
-// API routes
-app.get('/api/chat/messages', (req, res) => {
-  res.json(chatMessages);
-});
-
-app.post('/api/chat/messages', (req, res) => {
-  const message = req.body;
-  if (!message || !message.text) {
-    return res.status(400).json({ error: 'Invalid message' });
-  }
-
-  const newMessage = {
-    ...message,
-    id: message.id || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    createdAt: message.createdAt || new Date().toISOString()
-  };
-
-  chatMessages.push(newMessage);
-  if (chatMessages.length > MAX_CHAT_HISTORY) {
-    chatMessages.shift();
-  }
-
-  res.status(201).json(newMessage);
 });
 
 // GA4 Proxy Route

@@ -9,6 +9,7 @@ import {
   VolumeX, 
   Search, 
   Music, 
+  Globe,
   ListMusic, 
   Loader2,
   Heart,
@@ -46,6 +47,7 @@ const MusicPlayer: React.FC = () => {
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState<'none' | 'one' | 'all'>('none');
+  const [isEmbedded, setIsEmbedded] = useState(true);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -227,26 +229,47 @@ const MusicPlayer: React.FC = () => {
       <div className="max-w-6xl mx-auto w-full flex-1 flex flex-col gap-8">
         {/* Header & Search */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <h1 className="text-5xl font-black italic uppercase tracking-tighter text-white mb-2">
-              {t('Chill Music')}
-            </h1>
-            <p className="text-text-secondary font-medium">Stream your favorite tracks without interruptions.</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-5xl font-black italic uppercase tracking-tighter text-white mb-2">
+                {t('Chill Music')}
+              </h1>
+              <p className="text-text-secondary font-medium">Stream your favorite tracks without interruptions.</p>
+            </div>
+            <button 
+              onClick={() => setIsEmbedded(!isEmbedded)}
+              className={`ml-4 px-4 py-2 rounded-xl border font-bold text-xs uppercase tracking-widest transition-all flex items-center gap-2 ${isEmbedded ? 'bg-accent border-accent text-white shadow-lg shadow-accent/20' : 'bg-surface border-white/5 text-text-secondary hover:text-white hover:border-white/20'}`}
+            >
+              <Globe size={16} />
+              {isEmbedded ? 'Custom Player' : 'Monochrome Site'}
+            </button>
           </div>
 
-          <form onSubmit={handleSearch} className="relative group w-full md:w-96">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-accent transition-colors" size={20} />
-            <input 
-              type="text" 
-              placeholder={t('Search for songs, artists...')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-surface border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white font-medium focus:outline-none focus:border-accent/40 focus:ring-4 focus:ring-accent/10 transition-all"
-            />
-          </form>
+          {!isEmbedded && (
+            <form onSubmit={handleSearch} className="relative group w-full md:w-96">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-accent transition-colors" size={20} />
+              <input 
+                type="text" 
+                placeholder={t('Search for songs, artists...')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-surface border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white font-medium focus:outline-none focus:border-accent/40 focus:ring-4 focus:ring-accent/10 transition-all"
+              />
+            </form>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
+        {isEmbedded ? (
+          <div className="flex-1 bg-surface border border-white/5 rounded-3xl overflow-hidden shadow-2xl relative min-h-[600px]">
+            <iframe 
+              src="https://monochrome.tf/" 
+              className="w-full h-full border-none"
+              title="Monochrome Music"
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
           {/* Main Content Area */}
           <div className="lg:col-span-2 flex flex-col gap-6">
             {isLoading && !currentTrack && (
@@ -454,7 +477,8 @@ const MusicPlayer: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+      )}
+    </div>
 
       {/* Hidden Audio Element */}
       {currentTrack?.url && (
