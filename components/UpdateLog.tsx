@@ -9,6 +9,11 @@ interface UpdateLogProps {
 
 const UPDATES = [
   {
+    version: "2.0",
+    date: "2026-04-16",
+    changes: ["Fixed Update Logs"]
+  },
+  {
     version: "1.4.0",
     date: "2026-04-02T17:03:00",
     changes: ["Added Over 1k Games"]

@@ -88,14 +88,30 @@ app.get('/api/analytics/data', async (req, res) => {
 const infamousProxy = createProxyMiddleware({
   target: 'https://infamous.qzz.io',
   changeOrigin: true,
-  pathRewrite: { '^/api/music/infamous': '/api' },
+  pathRewrite: (path, req) => {
+    return path.replace('/api/music/infamous', '/api');
+  },
   headers: {
     'Referer': 'https://infamous.qzz.io/',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
   }
 });
 
-app.use('/api/music/infamous', infamousProxy);
+// Mount at root so pathRewrite sees the full path, or use the prefix and rewrite from ^/
+app.use('/api/music/infamous', createProxyMiddleware({
+  target: 'https://infamous.qzz.io',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/': '/api/'
+  },
+  on: {
+    proxyReq: (proxyReq, req, res) => {
+      proxyReq.setHeader('Referer', 'https://infamous.qzz.io/');
+      proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
+      proxyReq.setHeader('Origin', 'https://infamous.qzz.io');
+    }
+  }
+}));
 
 app.get('/api/music/infamous/image', async (req, res) => {
   try {
