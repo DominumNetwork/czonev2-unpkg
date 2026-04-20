@@ -18,7 +18,6 @@ import AuthModal from './components/AuthModal';
 import SuggestionModal from './components/SuggestionModal';
 import AppealModal from './components/AppealModal';
 import MusicPlayer from './components/MusicPlayer';
-import { ChatWidget } from './components/ChatWidget';
 import { ChatPage } from './components/ChatPage';
 import { SiteAnnouncements } from './components/SiteAnnouncements';
 import { UpdateOverlay } from './components/UpdateOverlay';
@@ -1451,7 +1450,6 @@ const App: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      <ChatWidget />
     </div>
   );
 };

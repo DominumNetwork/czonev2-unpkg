@@ -15,6 +15,7 @@
     "@google-analytics/data": "^5.2.1",
     "@google/genai": "^1.43.0",
     "@tailwindcss/vite": "^4.2.1",
+    "@widgetbot/react-embed": "^1.10.0",
     "axios": "^1.13.6",
     "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
