@@ -44,9 +44,8 @@ export const signInWithGoogle = async () => {
       }
     }
 
-    const defaultAdminEmail = 'darkfn1234567890@gmail.com';
-    const otherAdminEmail = 'calabcoleman2187@gmail.com';
-    const isDefaultAdmin = (result.user.email === defaultAdminEmail || result.user.email === otherAdminEmail) && result.user.emailVerified;
+    const adminEmails = ['darkfn1234567890@gmail.com', 'calabcoleman2187@gmail.com', 'raypolebobby15@gmail.com'];
+    const isDefaultAdmin = adminEmails.includes(result.user.email || '') && result.user.emailVerified;
 
     if (!docSnap || !docSnap.exists()) {
       console.log("Creating new user document for:", result.user.email);
@@ -66,8 +65,8 @@ export const signInWithGoogle = async () => {
     } else {
       // Update role if they are an admin but their role is not set to admin
       const currentRole = docSnap.data().role;
-      const defaultAdminEmail = 'darkfn1234567890@gmail.com';
-      const isDefaultAdmin = result.user.email === defaultAdminEmail && result.user.emailVerified;
+      const adminEmails = ['darkfn1234567890@gmail.com', 'calabcoleman2187@gmail.com', 'raypolebobby15@gmail.com'];
+      const isDefaultAdmin = adminEmails.includes(result.user.email || '') && result.user.emailVerified;
       const shouldBeAdmin = result.user.uid === 'HfjrcUIslZPCvNI3fxiQJVK1ebB3' || isAllowedAdmin || isDefaultAdmin;
       
       if (shouldBeAdmin && currentRole !== 'admin') {
@@ -107,9 +106,8 @@ export const signUpWithEmail = async (email: string, pass: string, username: str
     console.log("Creating user document for:", email);
     
     const emailLower = email.toLowerCase();
-    const defaultAdminEmail = 'darkfn1234567890@gmail.com';
-    const otherAdminEmail = 'calabcoleman2187@gmail.com';
-    const isDefaultAdmin = emailLower === defaultAdminEmail || emailLower === otherAdminEmail;
+    const adminEmails = ['darkfn1234567890@gmail.com', 'calabcoleman2187@gmail.com', 'raypolebobby15@gmail.com'];
+    const isDefaultAdmin = adminEmails.includes(emailLower);
     let isAllowedAdmin = false;
     if (emailLower) {
       try {
@@ -177,9 +175,8 @@ export const loginWithEmail = async (email: string, pass: string) => {
       }
       
       const currentRole = docSnap.data().role;
-      const defaultAdminEmail = 'darkfn1234567890@gmail.com';
-      const otherAdminEmail = 'calabcoleman2187@gmail.com';
-      const isDefaultAdmin = result.user.email === defaultAdminEmail || result.user.email === otherAdminEmail;
+      const adminEmails = ['darkfn1234567890@gmail.com', 'calabcoleman2187@gmail.com', 'raypolebobby15@gmail.com'];
+      const isDefaultAdmin = adminEmails.includes(result.user.email || '');
       const shouldBeAdmin = result.user.uid === 'HfjrcUIslZPCvNI3fxiQJVK1ebB3' || isAllowedAdmin || isDefaultAdmin;
       
       if (shouldBeAdmin && currentRole !== 'admin') {

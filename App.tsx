@@ -255,10 +255,9 @@ const App: React.FC = () => {
       console.log("Auth state changed:", currentUser?.email);
       setUser(currentUser);
       const superAdminUid = 'HfjrcUIslZPCvNI3fxiQJVK1ebB3';
-      const defaultAdminEmail = 'darkfn1234567890@gmail.com';
-      const otherAdminEmail = 'calabcoleman2187@gmail.com';
+      const adminEmails = ['darkfn1234567890@gmail.com', 'calabcoleman2187@gmail.com', 'raypolebobby15@gmail.com'];
       const isSuperAdminUser = currentUser?.uid === superAdminUid;
-      const isDefaultAdmin = (currentUser?.email === defaultAdminEmail || currentUser?.email === otherAdminEmail) && currentUser?.emailVerified;
+      const isDefaultAdmin = adminEmails.includes(currentUser?.email || '') && currentUser?.emailVerified;
       
       setIsSuperAdmin(isSuperAdminUser);
       if (isSuperAdminUser || isDefaultAdmin) setIsAdmin(true);
@@ -342,10 +341,9 @@ const App: React.FC = () => {
         
         // Update admin status based on role in database and super admin UID
         const superAdminUid = 'HfjrcUIslZPCvNI3fxiQJVK1ebB3';
-        const defaultAdminEmail = 'darkfn1234567890@gmail.com';
-        const otherAdminEmail = 'calabcoleman2187@gmail.com';
+        const adminEmails = ['darkfn1234567890@gmail.com', 'calabcoleman2187@gmail.com', 'raypolebobby15@gmail.com'];
         const isSuperAdminUser = user.uid === superAdminUid;
-        const isDefaultAdmin = (user.email === defaultAdminEmail || user.email === otherAdminEmail) && user.emailVerified;
+        const isDefaultAdmin = adminEmails.includes(user.email || '') && user.emailVerified;
         const isAdminRole = ['admin', 'co-owner', 'owner'].includes(data.role || '');
         
         setIsSuperAdmin(isSuperAdminUser);
