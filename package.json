@@ -1,8 +1,11 @@
 {
-  "name": "chillzone-visual-library",
-  "private": true,
-  "version": "0.0.0",
+  "name": "chillzone",
+  "version": "1.0.0",
   "type": "module",
+  "unpkg": "dist/index.html",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "start": "node dist/server.js",
     "dev": "tsx server.ts",
