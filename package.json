@@ -1,9 +1,9 @@
 {
   "name": "chilly-mountain",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "This description is funni :3",
-  "main": "static/index.html",
-  "unpkg": "static/index.html",
+  "main": "index.html",
+  "unpkg": "dist/index.html",
   "type": "module",
   "files": [
     "static/",
