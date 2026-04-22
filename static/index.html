@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Czone Static</title>
+  <meta name="description" content="Czone static package preview" />
+  <link rel="icon" type="image/svg+xml" href="../logo.svg" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <img src="../logo.svg" alt="Czone" class="logo" />
+    <div>
+      <h1>Czone</h1>
+      <p>Static mode (UNPKG-safe)</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <h2>Status</h2>
+      <p id="status">Loading…</p>
+      <p class="muted">This page is plain HTML/CSS/JS so it works without React bundling/runtime.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Quick Links</h2>
+      <div id="links" class="grid"></div>
+    </section>
+  </main>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>
