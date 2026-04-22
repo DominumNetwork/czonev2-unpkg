@@ -1,6 +1,6 @@
 {
   "name": "chilly-mountain",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "This description is funni :3",
   "main": "index.html",
   "unpkg": "index.html",
@@ -71,7 +71,15 @@
     "type": "git",
     "url": "git+https://github.com/ohsols/czonev2-unpkg.git"
   },
-  "author": "Michael Ramirez",
+  "keywords": [
+    "Education",
+    "Learning",
+    "K-12",
+    "Mathematics",
+    "Science",
+    "History"
+  ],
+  "author": "Dominus_Elitus",
   "license": "MIT",
   "scripts": {
     "start": "node dist/server.js",
