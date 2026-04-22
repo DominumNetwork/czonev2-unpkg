@@ -1,9 +1,9 @@
 {
   "name": "chilly-mountain",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "This description is funni :3",
   "main": "index.html",
-  "unpkg": "index.html",
+  "unpkg": "dist/index.html",
   "type": "module",
   "files": [
     "dist/",
@@ -87,7 +87,8 @@
     "dev": "tsx server.ts",
     "build": "rm -rf dist && vite build && esbuild server.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server.js",
     "preview": "vite preview",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "prepack": "vite build"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",

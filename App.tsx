@@ -22,7 +22,7 @@ import { UpdateOverlay } from './components/UpdateOverlay';
 import { ChillZoneLogo } from './components/ChillZoneLogo';
 import { Search, X, Film, Sparkles, BookOpen, Tv, SearchX, PlayCircle, Star, Globe, Users, ExternalLink, ShieldAlert, Zap, Activity, Loader2, Book, AlertTriangle, Settings as SettingsIcon, GitCommit, ChevronDown, LayoutGrid, Gamepad2, ShieldCheck, LogOut, LogIn, Send, Music, MessageSquare } from 'lucide-react';
 
-const DEFAULT_LOGO = "/logo.svg";
+const DEFAULT_LOGO = "./logo.svg";
 
 const DiscordIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
   <svg 
@@ -130,10 +130,13 @@ const ScrambleEffect: React.FC = () => {
 };
 
 const getInitialCategory = (): Category => {
-  const path = window.location.pathname.substring(1).toLowerCase();
-  const normalizedPath = path.replace('-', ' ') as Category;
   const validCategories: Category[] = ['home', 'movies', 'tv shows', 'anime', 'manga', 'proxies', 'partners', 'dev', 'support', 'donate', 'apps', 'browser', 'settings', 'games', 'socials'];
-  
+
+  const hashPath = window.location.hash.replace(/^#\/?/, '').toLowerCase();
+  const pathname = window.location.pathname.substring(1).toLowerCase();
+  const rawPath = hashPath || pathname;
+  const normalizedPath = rawPath.replace('-', ' ') as Category;
+
   if (validCategories.includes(normalizedPath)) {
     return normalizedPath;
   }
@@ -159,16 +162,16 @@ const App: React.FC = () => {
 
   const navigate = (cat: Category) => {
     setActiveCategory(cat);
-    const path = cat === 'home' ? '/' : '/' + cat.replace(' ', '-');
-    window.history.pushState({}, '', path);
+    const hashPath = cat === 'home' ? '#/' : `#/${cat.replace(' ', '-')}`;
+    window.location.hash = hashPath;
   };
 
   useEffect(() => {
-    const handlePopState = () => {
+    const handleHashChange = () => {
       setActiveCategory(getInitialCategory());
     };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   // Debugging customLogo
@@ -210,7 +213,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!isAuthReady) return;
 
-    const path = window.location.pathname.substring(1).toLowerCase().replace('-', ' ');
+    const path = (window.location.hash.replace(/^#\/?/, '') || window.location.pathname.substring(1)).toLowerCase().replace('-', ' ');
     
     // Redirect to root if on root path to ensure home is selected, 
     // or handle specific defaults if necessary.
@@ -426,19 +429,19 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname.substring(1).toLowerCase();
+    const handleHashChange = () => {
+      const path = (window.location.hash.replace(/^#\/?/, '') || window.location.pathname.substring(1)).toLowerCase();
       const normalizedPath = path.replace('-', ' ') as Category;
       const validCategories: Category[] = ['home', 'movies', 'tv shows', 'anime', 'manga', 'music', 'proxies', 'partners', 'dev', 'support', 'donate', 'apps', 'browser', 'settings', 'games', 'socials'];
-      
+
       if (validCategories.includes(normalizedPath)) {
         setActiveCategory(normalizedPath);
       } else {
-        setActiveCategory('donate');
+        setActiveCategory('home');
       }
     };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   useEffect(() => {
