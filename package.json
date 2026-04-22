@@ -1,11 +1,12 @@
 {
   "name": "chilly-mountain",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "This description is funni :3",
   "main": "index.html",
   "unpkg": "index.html",
   "type": "module",
   "files": [
+    "dist/",
     "services/",
     "public/",
     "db/",
